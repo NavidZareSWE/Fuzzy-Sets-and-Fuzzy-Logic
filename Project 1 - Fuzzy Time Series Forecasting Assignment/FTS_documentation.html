@@ -1,0 +1,2463 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Fuzzy Time Series - Complete Technical Documentation</title>
+    <style>
+        /* ===========================================
+           CSS CUSTOM PROPERTIES (VARIABLES)
+           ===========================================
+           Using CSS variables for consistent theming.
+           All colors are defined here for easy modification.
+        */
+        :root {
+            /* Background colors - Dark theme */
+            --bg-primary: #0d1117;
+            --bg-secondary: #161b22;
+            --bg-tertiary: #21262d;
+            --bg-card: #1c2128;
+            --bg-hover: #30363d;
+            
+            /* Text colors */
+            --text-primary: #e6edf3;
+            --text-secondary: #8b949e;
+            --text-muted: #6e7681;
+            --text-link: #58a6ff;
+            
+            /* Accent colors */
+            --accent-blue: #58a6ff;
+            --accent-green: #3fb950;
+            --accent-purple: #a371f7;
+            --accent-orange: #d29922;
+            --accent-red: #f85149;
+            --accent-cyan: #39c5cf;
+            --accent-pink: #db61a2;
+            
+            /* Border and shadows */
+            --border-color: #30363d;
+            --border-light: #484f58;
+            --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.3);
+            --shadow-md: 0 4px 12px rgba(0, 0, 0, 0.4);
+            --shadow-lg: 0 8px 24px rgba(0, 0, 0, 0.5);
+            
+            /* Code colors - Syntax highlighting (GitHub Dark theme inspired) */
+            --code-bg: #0d1117;
+            --code-border: #30363d;
+            --syntax-keyword: #ff7b72;
+            --syntax-string: #a5d6ff;
+            --syntax-number: #79c0ff;
+            --syntax-function: #d2a8ff;
+            --syntax-class: #ffa657;
+            --syntax-comment: #8b949e;
+            --syntax-operator: #ff7b72;
+            --syntax-variable: #ffa657;
+            --syntax-parameter: #ffa657;
+            --syntax-property: #79c0ff;
+            --syntax-decorator: #d2a8ff;
+            --syntax-builtin: #ffa657;
+            
+            /* Spacing */
+            --spacing-xs: 4px;
+            --spacing-sm: 8px;
+            --spacing-md: 16px;
+            --spacing-lg: 24px;
+            --spacing-xl: 32px;
+            --spacing-2xl: 48px;
+            
+            /* Typography */
+            --font-sans: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Noto Sans', Helvetica, Arial, sans-serif;
+            --font-mono: 'SFMono-Regular', Consolas, 'Liberation Mono', Menlo, Courier, monospace;
+            --font-size-sm: 0.875rem;
+            --font-size-base: 1rem;
+            --font-size-lg: 1.125rem;
+            --font-size-xl: 1.25rem;
+            --font-size-2xl: 1.5rem;
+            --font-size-3xl: 2rem;
+            
+            /* Layout */
+            --sidebar-width: 280px;
+            --content-max-width: 900px;
+            --header-height: 64px;
+        }
+
+        /* ===========================================
+           RESET & BASE STYLES
+           =========================================== */
+        *, *::before, *::after {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        html {
+            scroll-behavior: smooth;
+            scroll-padding-top: calc(var(--header-height) + var(--spacing-lg));
+        }
+
+        body {
+            font-family: var(--font-sans);
+            font-size: var(--font-size-base);
+            line-height: 1.6;
+            color: var(--text-primary);
+            background-color: var(--bg-primary);
+            min-height: 100vh;
+        }
+
+        /* ===========================================
+           LAYOUT STRUCTURE
+           =========================================== */
+        .layout {
+            display: flex;
+            min-height: 100vh;
+        }
+
+        /* Sidebar */
+        .sidebar {
+            width: var(--sidebar-width);
+            background-color: var(--bg-secondary);
+            border-right: 1px solid var(--border-color);
+            position: fixed;
+            top: 0;
+            left: 0;
+            height: 100vh;
+            overflow-y: auto;
+            z-index: 100;
+            transition: transform 0.3s ease;
+        }
+
+        .sidebar-header {
+            padding: var(--spacing-lg);
+            border-bottom: 1px solid var(--border-color);
+            position: sticky;
+            top: 0;
+            background-color: var(--bg-secondary);
+            z-index: 10;
+        }
+
+        .sidebar-logo {
+            display: flex;
+            align-items: center;
+            gap: var(--spacing-sm);
+            text-decoration: none;
+            color: var(--text-primary);
+        }
+
+        .sidebar-logo-icon {
+            font-size: 1.5rem;
+        }
+
+        .sidebar-logo-text {
+            font-weight: 600;
+            font-size: var(--font-size-lg);
+        }
+
+        .sidebar-version {
+            font-size: var(--font-size-sm);
+            color: var(--text-muted);
+            margin-top: var(--spacing-xs);
+        }
+
+        .sidebar-nav {
+            padding: var(--spacing-md);
+        }
+
+        .nav-section {
+            margin-bottom: var(--spacing-lg);
+        }
+
+        .nav-section-title {
+            font-size: var(--font-size-sm);
+            font-weight: 600;
+            color: var(--text-secondary);
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            padding: var(--spacing-sm) var(--spacing-md);
+            margin-bottom: var(--spacing-xs);
+        }
+
+        .nav-list {
+            list-style: none;
+        }
+
+        .nav-item {
+            margin-bottom: 2px;
+        }
+
+        .nav-link {
+            display: block;
+            padding: var(--spacing-sm) var(--spacing-md);
+            color: var(--text-secondary);
+            text-decoration: none;
+            border-radius: 6px;
+            font-size: var(--font-size-sm);
+            transition: all 0.15s ease;
+        }
+
+        .nav-link:hover {
+            background-color: var(--bg-hover);
+            color: var(--text-primary);
+        }
+
+        .nav-link.active {
+            background-color: rgba(88, 166, 255, 0.15);
+            color: var(--accent-blue);
+        }
+
+        .nav-link-sub {
+            padding-left: calc(var(--spacing-md) + var(--spacing-lg));
+            font-size: 0.8rem;
+        }
+
+        /* Main content area */
+        .main-content {
+            flex: 1;
+            margin-left: var(--sidebar-width);
+            min-height: 100vh;
+        }
+
+        .content-wrapper {
+            max-width: var(--content-max-width);
+            margin: 0 auto;
+            padding: var(--spacing-2xl);
+        }
+
+        /* ===========================================
+           HEADER COMPONENT
+           =========================================== */
+        .page-header {
+            margin-bottom: var(--spacing-2xl);
+            padding-bottom: var(--spacing-xl);
+            border-bottom: 1px solid var(--border-color);
+        }
+
+        .page-title {
+            font-size: var(--font-size-3xl);
+            font-weight: 600;
+            margin-bottom: var(--spacing-sm);
+            background: linear-gradient(135deg, var(--accent-blue), var(--accent-purple));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        .page-description {
+            font-size: var(--font-size-lg);
+            color: var(--text-secondary);
+            max-width: 700px;
+        }
+
+        /* ===========================================
+           TYPOGRAPHY
+           =========================================== */
+        h1, h2, h3, h4, h5, h6 {
+            color: var(--text-primary);
+            font-weight: 600;
+            line-height: 1.25;
+        }
+
+        h2 {
+            font-size: var(--font-size-2xl);
+            margin-top: var(--spacing-2xl);
+            margin-bottom: var(--spacing-lg);
+            padding-bottom: var(--spacing-sm);
+            border-bottom: 1px solid var(--border-color);
+        }
+
+        h3 {
+            font-size: var(--font-size-xl);
+            margin-top: var(--spacing-xl);
+            margin-bottom: var(--spacing-md);
+            color: var(--accent-blue);
+        }
+
+        h4 {
+            font-size: var(--font-size-lg);
+            margin-top: var(--spacing-lg);
+            margin-bottom: var(--spacing-md);
+            color: var(--text-primary);
+        }
+
+        h5 {
+            font-size: var(--font-size-base);
+            margin-top: var(--spacing-md);
+            margin-bottom: var(--spacing-sm);
+            color: var(--text-secondary);
+        }
+
+        p {
+            margin-bottom: var(--spacing-md);
+            color: var(--text-primary);
+        }
+
+        a {
+            color: var(--text-link);
+            text-decoration: none;
+        }
+
+        a:hover {
+            text-decoration: underline;
+        }
+
+        strong {
+            font-weight: 600;
+            color: var(--text-primary);
+        }
+
+        em {
+            font-style: italic;
+        }
+
+        /* Lists */
+        ul, ol {
+            margin-bottom: var(--spacing-md);
+            padding-left: var(--spacing-xl);
+        }
+
+        li {
+            margin-bottom: var(--spacing-sm);
+            color: var(--text-primary);
+        }
+
+        li::marker {
+            color: var(--text-muted);
+        }
+
+        /* ===========================================
+           CODE BLOCKS WITH SYNTAX HIGHLIGHTING
+           =========================================== */
+        pre {
+            background-color: var(--code-bg);
+            border: 1px solid var(--code-border);
+            border-radius: 8px;
+            padding: var(--spacing-md);
+            overflow-x: auto;
+            margin: var(--spacing-md) 0;
+            position: relative;
+        }
+
+        pre code {
+            font-family: var(--font-mono);
+            font-size: var(--font-size-sm);
+            line-height: 1.5;
+            color: var(--text-primary);
+            display: block;
+        }
+
+        /* Code block header with filename */
+        .code-block {
+            margin: var(--spacing-lg) 0;
+            border-radius: 8px;
+            overflow: hidden;
+            border: 1px solid var(--code-border);
+        }
+
+        .code-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            background-color: var(--bg-tertiary);
+            padding: var(--spacing-sm) var(--spacing-md);
+            border-bottom: 1px solid var(--code-border);
+        }
+
+        .code-filename {
+            font-family: var(--font-mono);
+            font-size: var(--font-size-sm);
+            color: var(--text-secondary);
+            display: flex;
+            align-items: center;
+            gap: var(--spacing-sm);
+        }
+
+        .code-language {
+            font-size: 0.75rem;
+            padding: 2px 8px;
+            background-color: var(--bg-hover);
+            border-radius: 4px;
+            color: var(--text-muted);
+        }
+
+        .code-block pre {
+            margin: 0;
+            border: none;
+            border-radius: 0;
+        }
+
+        /* Inline code */
+        code:not(pre code) {
+            font-family: var(--font-mono);
+            font-size: 0.875em;
+            background-color: var(--bg-tertiary);
+            padding: 2px 6px;
+            border-radius: 4px;
+            color: var(--accent-blue);
+        }
+
+        /* Syntax highlighting classes */
+        .token-keyword { color: var(--syntax-keyword); }
+        .token-string { color: var(--syntax-string); }
+        .token-number { color: var(--syntax-number); }
+        .token-function { color: var(--syntax-function); }
+        .token-class { color: var(--syntax-class); }
+        .token-comment { color: var(--syntax-comment); font-style: italic; }
+        .token-operator { color: var(--syntax-operator); }
+        .token-variable { color: var(--syntax-variable); }
+        .token-parameter { color: var(--syntax-parameter); }
+        .token-property { color: var(--syntax-property); }
+        .token-decorator { color: var(--syntax-decorator); }
+        .token-builtin { color: var(--syntax-builtin); }
+        .token-punctuation { color: var(--text-primary); }
+        .token-self { color: var(--syntax-keyword); font-style: italic; }
+
+        /* Line numbers */
+        .code-with-lines {
+            counter-reset: line;
+        }
+
+        .code-with-lines .code-line {
+            display: block;
+            counter-increment: line;
+        }
+
+        .code-with-lines .code-line::before {
+            content: counter(line);
+            display: inline-block;
+            width: 3em;
+            padding-right: 1em;
+            margin-right: 1em;
+            text-align: right;
+            color: var(--text-muted);
+            border-right: 1px solid var(--border-color);
+            user-select: none;
+        }
+
+        /* Highlighted line */
+        .code-line.highlighted {
+            background-color: rgba(88, 166, 255, 0.1);
+            margin: 0 calc(-1 * var(--spacing-md));
+            padding: 0 var(--spacing-md);
+        }
+
+        /* ===========================================
+           TABLES
+           =========================================== */
+        .table-wrapper {
+            overflow-x: auto;
+            margin: var(--spacing-lg) 0;
+            border-radius: 8px;
+            border: 1px solid var(--border-color);
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: var(--font-size-sm);
+        }
+
+        th, td {
+            padding: var(--spacing-sm) var(--spacing-md);
+            text-align: left;
+            border-bottom: 1px solid var(--border-color);
+        }
+
+        th {
+            background-color: var(--bg-tertiary);
+            color: var(--text-primary);
+            font-weight: 600;
+            white-space: nowrap;
+        }
+
+        tr:last-child td {
+            border-bottom: none;
+        }
+
+        tr:hover td {
+            background-color: var(--bg-hover);
+        }
+
+        /* ===========================================
+           CARDS & BOXES
+           =========================================== */
+        .card {
+            background-color: var(--bg-card);
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            padding: var(--spacing-lg);
+            margin: var(--spacing-lg) 0;
+        }
+
+        .card-header {
+            display: flex;
+            align-items: center;
+            gap: var(--spacing-sm);
+            margin-bottom: var(--spacing-md);
+        }
+
+        .card-icon {
+            font-size: 1.25rem;
+        }
+
+        .card-title {
+            font-weight: 600;
+            font-size: var(--font-size-base);
+        }
+
+        /* Alert/Info boxes */
+        .alert {
+            border-radius: 8px;
+            padding: var(--spacing-md);
+            margin: var(--spacing-lg) 0;
+            border-left: 4px solid;
+        }
+
+        .alert-info {
+            background-color: rgba(88, 166, 255, 0.1);
+            border-color: var(--accent-blue);
+        }
+
+        .alert-success {
+            background-color: rgba(63, 185, 80, 0.1);
+            border-color: var(--accent-green);
+        }
+
+        .alert-warning {
+            background-color: rgba(210, 153, 34, 0.1);
+            border-color: var(--accent-orange);
+        }
+
+        .alert-danger {
+            background-color: rgba(248, 81, 73, 0.1);
+            border-color: var(--accent-red);
+        }
+
+        .alert-title {
+            display: flex;
+            align-items: center;
+            gap: var(--spacing-sm);
+            font-weight: 600;
+            margin-bottom: var(--spacing-sm);
+        }
+
+        .alert p:last-child {
+            margin-bottom: 0;
+        }
+
+        /* ===========================================
+           FUNCTION/CLASS DOCUMENTATION
+           =========================================== */
+        .doc-item {
+            background-color: var(--bg-card);
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            margin: var(--spacing-lg) 0;
+            overflow: hidden;
+        }
+
+        .doc-item-header {
+            background-color: var(--bg-tertiary);
+            padding: var(--spacing-md) var(--spacing-lg);
+            border-bottom: 1px solid var(--border-color);
+        }
+
+        .doc-item-signature {
+            font-family: var(--font-mono);
+            font-size: var(--font-size-sm);
+            color: var(--text-primary);
+            display: flex;
+            flex-wrap: wrap;
+            align-items: baseline;
+            gap: var(--spacing-xs);
+        }
+
+        .doc-item-type {
+            font-size: 0.75rem;
+            padding: 2px 8px;
+            border-radius: 4px;
+            font-weight: 600;
+            margin-right: var(--spacing-sm);
+        }
+
+        .doc-item-type.class {
+            background-color: rgba(163, 113, 247, 0.2);
+            color: var(--accent-purple);
+        }
+
+        .doc-item-type.function {
+            background-color: rgba(88, 166, 255, 0.2);
+            color: var(--accent-blue);
+        }
+
+        .doc-item-type.method {
+            background-color: rgba(63, 185, 80, 0.2);
+            color: var(--accent-green);
+        }
+
+        .doc-item-type.property {
+            background-color: rgba(210, 153, 34, 0.2);
+            color: var(--accent-orange);
+        }
+
+        .doc-item-name {
+            color: var(--syntax-function);
+            font-weight: 600;
+        }
+
+        .doc-item-params {
+            color: var(--text-secondary);
+        }
+
+        .doc-item-body {
+            padding: var(--spacing-lg);
+        }
+
+        .doc-section {
+            margin-bottom: var(--spacing-lg);
+        }
+
+        .doc-section:last-child {
+            margin-bottom: 0;
+        }
+
+        .doc-section-title {
+            font-size: var(--font-size-sm);
+            font-weight: 600;
+            color: var(--text-secondary);
+            text-transform: uppercase;
+            margin-bottom: var(--spacing-sm);
+        }
+
+        .param-list {
+            list-style: none;
+            padding: 0;
+        }
+
+        .param-item {
+            display: flex;
+            gap: var(--spacing-md);
+            padding: var(--spacing-sm) 0;
+            border-bottom: 1px solid var(--border-color);
+        }
+
+        .param-item:last-child {
+            border-bottom: none;
+        }
+
+        .param-name {
+            font-family: var(--font-mono);
+            font-weight: 600;
+            color: var(--accent-orange);
+            min-width: 120px;
+        }
+
+        .param-type {
+            font-family: var(--font-mono);
+            font-size: var(--font-size-sm);
+            color: var(--accent-purple);
+            min-width: 100px;
+        }
+
+        .param-desc {
+            color: var(--text-secondary);
+            flex: 1;
+        }
+
+        /* ===========================================
+           FILE TREE
+           =========================================== */
+        .file-tree {
+            font-family: var(--font-mono);
+            font-size: var(--font-size-sm);
+            background-color: var(--code-bg);
+            border: 1px solid var(--code-border);
+            border-radius: 8px;
+            padding: var(--spacing-md);
+            margin: var(--spacing-lg) 0;
+        }
+
+        .file-tree-item {
+            padding: var(--spacing-xs) 0;
+            color: var(--text-secondary);
+        }
+
+        .file-tree-item.folder {
+            color: var(--accent-blue);
+        }
+
+        .file-tree-item.file {
+            color: var(--text-primary);
+        }
+
+        .file-tree-item .icon {
+            margin-right: var(--spacing-sm);
+        }
+
+        /* ===========================================
+           DIAGRAMS (ASCII)
+           =========================================== */
+        .diagram {
+            background-color: var(--code-bg);
+            border: 1px solid var(--code-border);
+            border-radius: 8px;
+            padding: var(--spacing-lg);
+            margin: var(--spacing-lg) 0;
+            font-family: var(--font-mono);
+            font-size: var(--font-size-sm);
+            line-height: 1.4;
+            white-space: pre;
+            overflow-x: auto;
+            color: var(--text-secondary);
+        }
+
+        .diagram .hl-blue { color: var(--accent-blue); }
+        .diagram .hl-green { color: var(--accent-green); }
+        .diagram .hl-purple { color: var(--accent-purple); }
+        .diagram .hl-orange { color: var(--accent-orange); }
+        .diagram .hl-red { color: var(--accent-red); }
+
+        /* ===========================================
+           BADGES & TAGS
+           =========================================== */
+        .badge {
+            display: inline-flex;
+            align-items: center;
+            padding: 2px 8px;
+            font-size: 0.75rem;
+            font-weight: 600;
+            border-radius: 4px;
+            margin-right: var(--spacing-xs);
+        }
+
+        .badge-blue {
+            background-color: rgba(88, 166, 255, 0.2);
+            color: var(--accent-blue);
+        }
+
+        .badge-green {
+            background-color: rgba(63, 185, 80, 0.2);
+            color: var(--accent-green);
+        }
+
+        .badge-purple {
+            background-color: rgba(163, 113, 247, 0.2);
+            color: var(--accent-purple);
+        }
+
+        .badge-orange {
+            background-color: rgba(210, 153, 34, 0.2);
+            color: var(--accent-orange);
+        }
+
+        .badge-red {
+            background-color: rgba(248, 81, 73, 0.2);
+            color: var(--accent-red);
+        }
+
+        /* ===========================================
+           TABS
+           =========================================== */
+        .tabs {
+            margin: var(--spacing-lg) 0;
+        }
+
+        .tab-list {
+            display: flex;
+            border-bottom: 1px solid var(--border-color);
+            margin-bottom: var(--spacing-md);
+        }
+
+        .tab-button {
+            padding: var(--spacing-sm) var(--spacing-md);
+            background: none;
+            border: none;
+            border-bottom: 2px solid transparent;
+            color: var(--text-secondary);
+            font-size: var(--font-size-sm);
+            cursor: pointer;
+            transition: all 0.15s ease;
+        }
+
+        .tab-button:hover {
+            color: var(--text-primary);
+        }
+
+        .tab-button.active {
+            color: var(--accent-blue);
+            border-bottom-color: var(--accent-blue);
+        }
+
+        .tab-content {
+            display: none;
+        }
+
+        .tab-content.active {
+            display: block;
+        }
+
+        /* ===========================================
+           PROGRESS TRACKER (SIDEBAR)
+           =========================================== */
+        .progress-section {
+            padding: var(--spacing-md);
+            background-color: var(--bg-tertiary);
+            margin: var(--spacing-md);
+            border-radius: 8px;
+        }
+
+        .progress-title {
+            font-size: var(--font-size-sm);
+            font-weight: 600;
+            color: var(--text-secondary);
+            margin-bottom: var(--spacing-sm);
+        }
+
+        .progress-bar {
+            height: 6px;
+            background-color: var(--bg-hover);
+            border-radius: 3px;
+            overflow: hidden;
+            margin-bottom: var(--spacing-sm);
+        }
+
+        .progress-fill {
+            height: 100%;
+            background: linear-gradient(90deg, var(--accent-green), var(--accent-blue));
+            border-radius: 3px;
+            transition: width 0.3s ease;
+        }
+
+        .progress-text {
+            font-size: 0.75rem;
+            color: var(--text-muted);
+        }
+
+        .checklist {
+            list-style: none;
+            margin-top: var(--spacing-md);
+        }
+
+        .checklist-item {
+            display: flex;
+            align-items: flex-start;
+            gap: var(--spacing-sm);
+            padding: var(--spacing-xs) 0;
+            font-size: var(--font-size-sm);
+            color: var(--text-secondary);
+        }
+
+        .checklist-item input[type="checkbox"] {
+            margin-top: 3px;
+            accent-color: var(--accent-green);
+        }
+
+        .checklist-item.completed {
+            text-decoration: line-through;
+            color: var(--text-muted);
+        }
+
+        /* ===========================================
+           SEARCH BOX
+           =========================================== */
+        .search-box {
+            padding: var(--spacing-md);
+            border-bottom: 1px solid var(--border-color);
+        }
+
+        .search-input {
+            width: 100%;
+            padding: var(--spacing-sm) var(--spacing-md);
+            background-color: var(--bg-tertiary);
+            border: 1px solid var(--border-color);
+            border-radius: 6px;
+            color: var(--text-primary);
+            font-size: var(--font-size-sm);
+        }
+
+        .search-input::placeholder {
+            color: var(--text-muted);
+        }
+
+        .search-input:focus {
+            outline: none;
+            border-color: var(--accent-blue);
+            box-shadow: 0 0 0 3px rgba(88, 166, 255, 0.15);
+        }
+
+        /* ===========================================
+           MOBILE RESPONSIVE
+           =========================================== */
+        .mobile-toggle {
+            display: none;
+            position: fixed;
+            top: var(--spacing-md);
+            left: var(--spacing-md);
+            z-index: 200;
+            padding: var(--spacing-sm);
+            background-color: var(--bg-tertiary);
+            border: 1px solid var(--border-color);
+            border-radius: 6px;
+            color: var(--text-primary);
+            cursor: pointer;
+        }
+
+        @media (max-width: 768px) {
+            .sidebar {
+                transform: translateX(-100%);
+            }
+
+            .sidebar.open {
+                transform: translateX(0);
+            }
+
+            .main-content {
+                margin-left: 0;
+            }
+
+            .mobile-toggle {
+                display: block;
+            }
+
+            .content-wrapper {
+                padding: var(--spacing-lg);
+            }
+        }
+
+        /* ===========================================
+           SCROLLBAR STYLING
+           =========================================== */
+        ::-webkit-scrollbar {
+            width: 10px;
+            height: 10px;
+        }
+
+        ::-webkit-scrollbar-track {
+            background: var(--bg-secondary);
+        }
+
+        ::-webkit-scrollbar-thumb {
+            background: var(--border-color);
+            border-radius: 5px;
+        }
+
+        ::-webkit-scrollbar-thumb:hover {
+            background: var(--text-muted);
+        }
+
+        /* ===========================================
+           COLLAPSIBLE SECTIONS
+           =========================================== */
+        .collapsible {
+            margin: var(--spacing-md) 0;
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            overflow: hidden;
+        }
+
+        .collapsible-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: var(--spacing-md);
+            background-color: var(--bg-tertiary);
+            cursor: pointer;
+            user-select: none;
+        }
+
+        .collapsible-header:hover {
+            background-color: var(--bg-hover);
+        }
+
+        .collapsible-title {
+            font-weight: 600;
+            display: flex;
+            align-items: center;
+            gap: var(--spacing-sm);
+        }
+
+        .collapsible-arrow {
+            transition: transform 0.2s ease;
+        }
+
+        .collapsible.open .collapsible-arrow {
+            transform: rotate(180deg);
+        }
+
+        .collapsible-content {
+            display: none;
+            padding: var(--spacing-md);
+            background-color: var(--bg-card);
+        }
+
+        .collapsible.open .collapsible-content {
+            display: block;
+        }
+
+        /* ===========================================
+           FORMULA DISPLAY
+           =========================================== */
+        .formula {
+            background-color: var(--bg-tertiary);
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            padding: var(--spacing-md) var(--spacing-lg);
+            margin: var(--spacing-md) 0;
+            font-family: 'Times New Roman', serif;
+            font-size: var(--font-size-lg);
+            text-align: center;
+            color: var(--text-primary);
+            overflow-x: auto;
+        }
+
+        .formula sub {
+            font-size: 0.7em;
+            vertical-align: sub;
+        }
+
+        .formula sup {
+            font-size: 0.7em;
+            vertical-align: super;
+        }
+
+        /* ===========================================
+           ANIMATIONS
+           =========================================== */
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .fade-in {
+            animation: fadeIn 0.3s ease;
+        }
+
+        /* ===========================================
+           PRINT STYLES
+           =========================================== */
+        @media print {
+            .sidebar {
+                display: none;
+            }
+
+            .main-content {
+                margin-left: 0;
+            }
+
+            .mobile-toggle {
+                display: none;
+            }
+
+            pre {
+                white-space: pre-wrap;
+                word-wrap: break-word;
+            }
+        }
+    </style>
+</head>
+<body>
+    <!-- Mobile menu toggle -->
+    <button class="mobile-toggle" onclick="toggleSidebar()">☰</button>
+
+    <div class="layout">
+        <!-- ===========================================
+             SIDEBAR NAVIGATION
+             =========================================== -->
+        <aside class="sidebar" id="sidebar">
+            <div class="sidebar-header">
+                <a href="#" class="sidebar-logo">
+                    <span class="sidebar-logo-icon">🔮</span>
+                    <span class="sidebar-logo-text">FTS Docs</span>
+                </a>
+                <div class="sidebar-version">v1.0.0 • Complete Reference</div>
+            </div>
+
+            <div class="search-box">
+                <input type="text" class="search-input" placeholder="Search documentation..." id="search-input" onkeyup="handleSearch(event)">
+            </div>
+
+            <nav class="sidebar-nav">
+                <!-- Getting Started -->
+                <div class="nav-section">
+                    <div class="nav-section-title">Getting Started</div>
+                    <ul class="nav-list">
+                        <li class="nav-item"><a href="#overview" class="nav-link active">Overview</a></li>
+                        <li class="nav-item"><a href="#installation" class="nav-link">Installation</a></li>
+                        <li class="nav-item"><a href="#quick-start" class="nav-link">Quick Start</a></li>
+                    </ul>
+                </div>
+
+                <!-- Core Concepts -->
+                <div class="nav-section">
+                    <div class="nav-section-title">Core Concepts</div>
+                    <ul class="nav-list">
+                        <li class="nav-item"><a href="#fuzzy-sets" class="nav-link">Fuzzy Sets</a></li>
+                        <li class="nav-item"><a href="#membership-functions" class="nav-link">Membership Functions</a></li>
+                        <li class="nav-item"><a href="#fts-algorithm" class="nav-link">FTS Algorithm</a></li>
+                        <li class="nav-item"><a href="#flr-flrg" class="nav-link">FLR & FLRG</a></li>
+                    </ul>
+                </div>
+
+                <!-- API Reference -->
+                <div class="nav-section">
+                    <div class="nav-section-title">API Reference</div>
+                    <ul class="nav-list">
+                        <li class="nav-item"><a href="#file-fts-core" class="nav-link">fts_core.py</a></li>
+                        <li class="nav-item"><a href="#class-fuzzyset" class="nav-link nav-link-sub">FuzzySet</a></li>
+                        <li class="nav-item"><a href="#class-universe" class="nav-link nav-link-sub">UniverseOfDiscourse</a></li>
+                        <li class="nav-item"><a href="#class-partitioner" class="nav-link nav-link-sub">FuzzySetPartitioner</a></li>
+                        <li class="nav-item"><a href="#class-fts" class="nav-link nav-link-sub">FuzzyTimeSeries</a></li>
+                        <li class="nav-item"><a href="#class-metrics" class="nav-link nav-link-sub">FTSMetrics</a></li>
+                        <li class="nav-item"><a href="#file-fts-data" class="nav-link">fts_data.py</a></li>
+                        <li class="nav-item"><a href="#file-fts-visualization" class="nav-link">fts_visualization.py</a></li>
+                        <li class="nav-item"><a href="#file-fts-experiments" class="nav-link">fts_experiments.py</a></li>
+                    </ul>
+                </div>
+
+                <!-- Algorithms -->
+                <div class="nav-section">
+                    <div class="nav-section-title">Algorithms</div>
+                    <ul class="nav-list">
+                        <li class="nav-item"><a href="#algo-fuzzification" class="nav-link">Fuzzification</a></li>
+                        <li class="nav-item"><a href="#algo-flrg-generation" class="nav-link">FLRG Generation</a></li>
+                        <li class="nav-item"><a href="#algo-defuzzification" class="nav-link">Defuzzification</a></li>
+                        <li class="nav-item"><a href="#algo-prediction" class="nav-link">Prediction</a></li>
+                    </ul>
+                </div>
+
+                <!-- Dependencies -->
+                <div class="nav-section">
+                    <div class="nav-section-title">Dependencies</div>
+                    <ul class="nav-list">
+                        <li class="nav-item"><a href="#dep-numpy" class="nav-link">NumPy</a></li>
+                        <li class="nav-item"><a href="#dep-pandas" class="nav-link">Pandas</a></li>
+                        <li class="nav-item"><a href="#dep-matplotlib" class="nav-link">Matplotlib</a></li>
+                    </ul>
+                </div>
+            </nav>
+
+            <!-- Progress Tracker -->
+            <div class="progress-section">
+                <div class="progress-title">📋 Reading Progress</div>
+                <div class="progress-bar">
+                    <div class="progress-fill" id="progress-fill" style="width: 0%"></div>
+                </div>
+                <div class="progress-text" id="progress-text">0% complete</div>
+            </div>
+        </aside>
+
+        <!-- ===========================================
+             MAIN CONTENT
+             =========================================== -->
+        <main class="main-content">
+            <div class="content-wrapper">
+
+                <!-- ==========================================
+                     SECTION: OVERVIEW
+                     ========================================== -->
+                <section id="overview" class="doc-section">
+                    <header class="page-header">
+                        <h1 class="page-title">Fuzzy Time Series Documentation</h1>
+                        <p class="page-description">
+                            Complete technical reference for the Fuzzy Time Series (FTS) forecasting implementation.
+                            Every class, function, and algorithm explained in detail.
+                        </p>
+                    </header>
+
+                    <h2>Project Overview</h2>
+                    
+                    <p>This documentation covers a complete implementation of <strong>Fuzzy Time Series (FTS)</strong> forecasting, including both First-Order FTS (FOFTS) and High-Order FTS (HOFTS). The implementation is built entirely from scratch without pre-built FTS libraries.</p>
+
+                    <div class="alert alert-info">
+                        <div class="alert-title">💡 What is Fuzzy Time Series?</div>
+                        <p>Fuzzy Time Series is a forecasting methodology that converts numerical time series data into linguistic (fuzzy) representations, discovers patterns in these representations, and uses those patterns to predict future values. Unlike traditional statistical methods, FTS can handle uncertainty and vague patterns naturally.</p>
+                    </div>
+
+                    <h3>Key Features</h3>
+                    <ul>
+                        <li><strong>Multiple Membership Functions:</strong> Triangular, Trapezoidal, Gaussian, and Generalized Bell</li>
+                        <li><strong>Flexible Order:</strong> Support for first-order through high-order models</li>
+                        <li><strong>Automatic Partitioning:</strong> Intelligent universe of discourse partitioning</li>
+                        <li><strong>Comprehensive Metrics:</strong> RMSE, MAE, and MAPE evaluation</li>
+                        <li><strong>Visualization Tools:</strong> Built-in plotting for analysis</li>
+                    </ul>
+
+                    <h3>Project Structure</h3>
+                    <div class="file-tree">
+<span class="file-tree-item folder"><span class="icon">📁</span>fuzzy_time_series/</span>
+<span class="file-tree-item file">  ├── <span class="icon">📄</span>__init__.py          <span style="color: var(--text-muted)"># Package initialization</span></span>
+<span class="file-tree-item file">  ├── <span class="icon">📄</span>fts_core.py          <span style="color: var(--text-muted)"># Core FTS algorithms</span></span>
+<span class="file-tree-item file">  ├── <span class="icon">📄</span>fts_data.py          <span style="color: var(--text-muted)"># Data loading utilities</span></span>
+<span class="file-tree-item file">  ├── <span class="icon">📄</span>fts_visualization.py <span style="color: var(--text-muted)"># Plotting functions</span></span>
+<span class="file-tree-item file">  ├── <span class="icon">📄</span>fts_experiments.py   <span style="color: var(--text-muted)"># Experiment framework</span></span>
+<span class="file-tree-item file">  ├── <span class="icon">📄</span>fts_interface.py     <span style="color: var(--text-muted)"># Interactive CLI</span></span>
+<span class="file-tree-item file">  ├── <span class="icon">📄</span>fts_report.py        <span style="color: var(--text-muted)"># Report generation</span></span>
+<span class="file-tree-item file">  ├── <span class="icon">📄</span>main.py              <span style="color: var(--text-muted)"># Main entry point</span></span>
+<span class="file-tree-item file">  ├── <span class="icon">📄</span>run_interactive.py   <span style="color: var(--text-muted)"># Interactive runner</span></span>
+<span class="file-tree-item file">  └── <span class="icon">📄</span>requirements.txt     <span style="color: var(--text-muted)"># Dependencies</span></span>
+                    </div>
+                </section>
+
+                <!-- ==========================================
+                     SECTION: INSTALLATION
+                     ========================================== -->
+                <section id="installation" class="doc-section">
+                    <h2>Installation</h2>
+
+                    <h3>Prerequisites</h3>
+                    <ul>
+                        <li>Python 3.8 or higher</li>
+                        <li>pip (Python package manager)</li>
+                    </ul>
+
+                    <h3>Install Dependencies</h3>
+                    <div class="code-block">
+                        <div class="code-header">
+                            <span class="code-filename"><span class="icon">⌨️</span>Terminal</span>
+                            <span class="code-language">bash</span>
+                        </div>
+                        <pre><code><span class="token-comment"># Install all required packages</span>
+pip install numpy pandas matplotlib openpyxl</code></pre>
+                    </div>
+
+                    <p>Alternatively, if you have the requirements.txt file:</p>
+
+                    <div class="code-block">
+                        <div class="code-header">
+                            <span class="code-filename"><span class="icon">⌨️</span>Terminal</span>
+                            <span class="code-language">bash</span>
+                        </div>
+                        <pre><code>pip install -r requirements.txt</code></pre>
+                    </div>
+
+                    <h3>Verify Installation</h3>
+                    <div class="code-block">
+                        <div class="code-header">
+                            <span class="code-filename"><span class="icon">🐍</span>Python</span>
+                            <span class="code-language">python</span>
+                        </div>
+                        <pre><code><span class="token-keyword">import</span> numpy <span class="token-keyword">as</span> np
+<span class="token-keyword">import</span> pandas <span class="token-keyword">as</span> pd
+<span class="token-keyword">import</span> matplotlib.pyplot <span class="token-keyword">as</span> plt
+
+<span class="token-builtin">print</span>(<span class="token-string">"All dependencies installed successfully!"</span>)</code></pre>
+                    </div>
+                </section>
+
+                <!-- ==========================================
+                     SECTION: QUICK START
+                     ========================================== -->
+                <section id="quick-start" class="doc-section">
+                    <h2>Quick Start</h2>
+
+                    <p>Here's a minimal example to get started with FTS forecasting:</p>
+
+                    <div class="code-block">
+                        <div class="code-header">
+                            <span class="code-filename"><span class="icon">🐍</span>quick_start.py</span>
+                            <span class="code-language">python</span>
+                        </div>
+                        <pre><code class="code-with-lines"><span class="code-line"><span class="token-keyword">from</span> fts_core <span class="token-keyword">import</span> FuzzyTimeSeries, MembershipFunctionType</span>
+<span class="code-line"><span class="token-keyword">import</span> numpy <span class="token-keyword">as</span> np</span>
+<span class="code-line"></span>
+<span class="code-line"><span class="token-comment"># Step 1: Prepare your time series data</span></span>
+<span class="code-line">data = np.array([<span class="token-number">10</span>, <span class="token-number">15</span>, <span class="token-number">20</span>, <span class="token-number">18</span>, <span class="token-number">25</span>, <span class="token-number">30</span>, <span class="token-number">28</span>, <span class="token-number">35</span>, <span class="token-number">32</span>, <span class="token-number">40</span>])</span>
+<span class="code-line"></span>
+<span class="code-line"><span class="token-comment"># Step 2: Create an FTS model</span></span>
+<span class="code-line highlighted">model = FuzzyTimeSeries(</span>
+<span class="code-line highlighted">    order=<span class="token-number">2</span>,                                     <span class="token-comment"># High-order (uses 2 previous values)</span></span>
+<span class="code-line highlighted">    num_partitions=<span class="token-number">7</span>,                            <span class="token-comment"># Number of fuzzy sets</span></span>
+<span class="code-line highlighted">    mf_type=MembershipFunctionType.TRIANGULAR    <span class="token-comment"># Membership function type</span></span>
+<span class="code-line highlighted">)</span>
+<span class="code-line"></span>
+<span class="code-line"><span class="token-comment"># Step 3: Train the model</span></span>
+<span class="code-line">model.fit(data)</span>
+<span class="code-line"></span>
+<span class="code-line"><span class="token-comment"># Step 4: Make predictions</span></span>
+<span class="code-line">history = [<span class="token-number">35</span>, <span class="token-number">32</span>, <span class="token-number">40</span>]  <span class="token-comment"># Recent values</span></span>
+<span class="code-line">next_value = model.predict_next(history)</span>
+<span class="code-line"><span class="token-builtin">print</span>(<span class="token-string">f"Predicted next value: </span>{next_value:<span class="token-number">.2f</span>}<span class="token-string">"</span>)</span>
+<span class="code-line"></span>
+<span class="code-line"><span class="token-comment"># Step 5: Forecast multiple steps</span></span>
+<span class="code-line">forecasts = model.forecast(steps=<span class="token-number">3</span>, initial_history=<span class="token-builtin">list</span>(data))</span>
+<span class="code-line"><span class="token-builtin">print</span>(<span class="token-string">f"3-step forecast: </span>{forecasts}<span class="token-string">"</span>)</span></code></pre>
+                    </div>
+
+                    <div class="alert alert-success">
+                        <div class="alert-title">✅ Output</div>
+                        <pre style="margin: 0; background: transparent; border: none; padding: 0;">Predicted next value: 38.33
+3-step forecast: [38.33, 38.33, 38.33]</pre>
+                    </div>
+                </section>
+
+                <!-- ==========================================
+                     SECTION: FUZZY SETS
+                     ========================================== -->
+                <section id="fuzzy-sets" class="doc-section">
+                    <h2>Fuzzy Sets</h2>
+
+                    <h3>What is a Fuzzy Set?</h3>
+                    <p>In classical set theory, an element either belongs to a set (membership = 1) or doesn't (membership = 0). In <strong>fuzzy set theory</strong>, elements can have <em>partial membership</em> between 0 and 1.</p>
+
+                    <div class="table-wrapper">
+                        <table>
+                            <thead>
+                                <tr>
+                                    <th>Concept</th>
+                                    <th>Classical Set</th>
+                                    <th>Fuzzy Set</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr>
+                                    <td>Membership</td>
+                                    <td>Binary: 0 or 1</td>
+                                    <td>Continuous: [0, 1]</td>
+                                </tr>
+                                <tr>
+                                    <td>Boundaries</td>
+                                    <td>Sharp, crisp</td>
+                                    <td>Gradual, fuzzy</td>
+                                </tr>
+                                <tr>
+                                    <td>Example</td>
+                                    <td>Temperature ≥ 30°C is "Hot"</td>
+                                    <td>28°C is 0.7 "Hot" and 0.3 "Warm"</td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+
+                    <h3>Why Use Fuzzy Sets for Time Series?</h3>
+                    <p>Time series data often exhibits patterns that are approximate rather than exact. Using fuzzy sets allows the model to:</p>
+                    <ul>
+                        <li><strong>Handle uncertainty:</strong> Real-world data is noisy and imprecise</li>
+                        <li><strong>Find approximate patterns:</strong> Sequences that are "similar" can be grouped</li>
+                        <li><strong>Provide linguistic interpretability:</strong> "If value is Medium, next is Medium-High"</li>
+                    </ul>
+
+                    <h3>Design Decision: Why Linguistic Variables?</h3>
+                    <div class="alert alert-info">
+                        <div class="alert-title">🎯 Design Rationale</div>
+                        <p>We chose to represent values as linguistic variables (A1, A2, A3...) because:</p>
+                        <ol>
+                            <li><strong>Dimensionality reduction:</strong> Continuous values are mapped to discrete categories</li>
+                            <li><strong>Pattern discovery:</strong> Easier to find recurring sequences in categorical data</li>
+                            <li><strong>Noise tolerance:</strong> Small variations in values don't change the fuzzy category</li>
+                        </ol>
+                    </div>
+                </section>
+
+                <!-- ==========================================
+                     SECTION: MEMBERSHIP FUNCTIONS
+                     ========================================== -->
+                <section id="membership-functions" class="doc-section">
+                    <h2>Membership Functions</h2>
+
+                    <p>A <strong>membership function (MF)</strong> defines how each point in the input space is mapped to a membership degree between 0 and 1. The choice of membership function affects how values are categorized.</p>
+
+                    <h3>Triangular Membership Function</h3>
+                    <p>The simplest and most commonly used MF. Defined by three parameters: left (a), peak (b), and right (c).</p>
+
+                    <div class="diagram">
+μ(x)
+1.0 │         ╱╲
+    │        ╱  ╲
+0.5 │       ╱    ╲
+    │      ╱      ╲
+0.0 │─────╱────────╲─────
+         a    b    c     x
+
+<span class="hl-blue">Formula:</span>
+  μ(x) = 0                  if x ≤ a or x ≥ c
+  μ(x) = (x - a) / (b - a)  if a < x ≤ b  <span class="hl-green">(rising slope)</span>
+  μ(x) = (c - x) / (c - b)  if b < x < c  <span class="hl-orange">(falling slope)</span>
+                    </div>
+
+                    <div class="code-block">
+                        <div class="code-header">
+                            <span class="code-filename"><span class="icon">🐍</span>fts_core.py</span>
+                            <span class="code-language">python</span>
+                        </div>
+                        <pre><code class="code-with-lines"><span class="code-line"><span class="token-keyword">def</span> <span class="token-function">_triangular_membership</span>(<span class="token-self">self</span>, x: <span class="token-builtin">float</span>) -> <span class="token-builtin">float</span>:</span>
+<span class="code-line">    <span class="token-string">"""</span></span>
+<span class="code-line"><span class="token-string">    Triangular membership function.</span></span>
+<span class="code-line"><span class="token-string">    </span></span>
+<span class="code-line"><span class="token-string">    Parameters:</span></span>
+<span class="code-line"><span class="token-string">        x: The crisp input value to evaluate</span></span>
+<span class="code-line"><span class="token-string">    </span></span>
+<span class="code-line"><span class="token-string">    Returns:</span></span>
+<span class="code-line"><span class="token-string">        Membership degree in range [0, 1]</span></span>
+<span class="code-line"><span class="token-string">    """</span></span>
+<span class="code-line">    <span class="token-comment"># Extract the three defining parameters</span></span>
+<span class="code-line">    a = <span class="token-self">self</span>.parameters[<span class="token-string">'a'</span>]  <span class="token-comment"># Left point (membership = 0)</span></span>
+<span class="code-line">    b = <span class="token-self">self</span>.parameters[<span class="token-string">'b'</span>]  <span class="token-comment"># Peak point (membership = 1)</span></span>
+<span class="code-line">    c = <span class="token-self">self</span>.parameters[<span class="token-string">'c'</span>]  <span class="token-comment"># Right point (membership = 0)</span></span>
+<span class="code-line">    </span>
+<span class="code-line">    <span class="token-comment"># Case 1: Outside the triangle (no membership)</span></span>
+<span class="code-line">    <span class="token-keyword">if</span> x <= a <span class="token-keyword">or</span> x >= c:</span>
+<span class="code-line">        <span class="token-keyword">return</span> <span class="token-number">0.0</span></span>
+<span class="code-line">    </span>
+<span class="code-line">    <span class="token-comment"># Case 2: On the rising slope (left side of peak)</span></span>
+<span class="code-line">    <span class="token-keyword">elif</span> a < x <= b:</span>
+<span class="code-line">        <span class="token-comment"># Linear interpolation from 0 to 1</span></span>
+<span class="code-line">        <span class="token-keyword">return</span> (x - a) / (b - a) <span class="token-keyword">if</span> b != a <span class="token-keyword">else</span> <span class="token-number">1.0</span></span>
+<span class="code-line">    </span>
+<span class="code-line">    <span class="token-comment"># Case 3: On the falling slope (right side of peak)</span></span>
+<span class="code-line">    <span class="token-keyword">else</span>:  <span class="token-comment"># b < x < c</span></span>
+<span class="code-line">        <span class="token-comment"># Linear interpolation from 1 to 0</span></span>
+<span class="code-line">        <span class="token-keyword">return</span> (c - x) / (c - b) <span class="token-keyword">if</span> c != b <span class="token-keyword">else</span> <span class="token-number">1.0</span></span></code></pre>
+                    </div>
+
+                    <h3>Gaussian Membership Function</h3>
+                    <p>A smooth, bell-shaped curve. Defined by center (c) and spread (σ).</p>
+
+                    <div class="formula">
+                        μ(x) = exp( -(x - c)<sup>2</sup> / (2σ<sup>2</sup>) )
+                    </div>
+
+                    <div class="code-block">
+                        <div class="code-header">
+                            <span class="code-filename"><span class="icon">🐍</span>fts_core.py</span>
+                            <span class="code-language">python</span>
+                        </div>
+                        <pre><code class="code-with-lines"><span class="code-line"><span class="token-keyword">def</span> <span class="token-function">_gaussian_membership</span>(<span class="token-self">self</span>, x: <span class="token-builtin">float</span>) -> <span class="token-builtin">float</span>:</span>
+<span class="code-line">    <span class="token-string">"""</span></span>
+<span class="code-line"><span class="token-string">    Gaussian membership function.</span></span>
+<span class="code-line"><span class="token-string">    </span></span>
+<span class="code-line"><span class="token-string">    The Gaussian MF produces smooth transitions between</span></span>
+<span class="code-line"><span class="token-string">    fuzzy sets, which can better model gradual changes.</span></span>
+<span class="code-line"><span class="token-string">    </span></span>
+<span class="code-line"><span class="token-string">    Why Gaussian?</span></span>
+<span class="code-line"><span class="token-string">    - Natural data often follows normal distributions</span></span>
+<span class="code-line"><span class="token-string">    - Smooth derivatives (good for optimization)</span></span>
+<span class="code-line"><span class="token-string">    - Never exactly zero (avoids hard boundaries)</span></span>
+<span class="code-line"><span class="token-string">    """</span></span>
+<span class="code-line">    c = <span class="token-self">self</span>.parameters[<span class="token-string">'c'</span>]      <span class="token-comment"># Center of the bell curve</span></span>
+<span class="code-line">    sigma = <span class="token-self">self</span>.parameters[<span class="token-string">'sigma'</span>]  <span class="token-comment"># Standard deviation (spread)</span></span>
+<span class="code-line">    </span>
+<span class="code-line">    <span class="token-comment"># NumPy's exp() computes e^x efficiently</span></span>
+<span class="code-line">    <span class="token-comment"># The formula gives 1.0 at x=c, decreasing as x moves away</span></span>
+<span class="code-line">    <span class="token-keyword">return</span> np.exp(-((x - c) ** <span class="token-number">2</span>) / (<span class="token-number">2</span> * sigma ** <span class="token-number">2</span>))</span></code></pre>
+                    </div>
+
+                    <h3>Trapezoidal Membership Function</h3>
+                    <p>Has a flat top (plateau). Defined by four parameters: a, b, c, d.</p>
+
+                    <div class="diagram">
+μ(x)
+1.0 │      ┌────────┐
+    │     ╱          ╲
+0.5 │    ╱            ╲
+    │   ╱              ╲
+0.0 │──╱────────────────╲──
+       a   b        c   d   x
+
+<span class="hl-blue">Formula:</span>
+  μ(x) = 0                  if x ≤ a or x ≥ d
+  μ(x) = (x - a) / (b - a)  if a < x < b  <span class="hl-green">(rising)</span>
+  μ(x) = 1                  if b ≤ x ≤ c  <span class="hl-purple">(plateau)</span>
+  μ(x) = (d - x) / (d - c)  if c < x < d  <span class="hl-orange">(falling)</span>
+                    </div>
+
+                    <div class="alert alert-info">
+                        <div class="alert-title">🎯 When to Use Trapezoidal?</div>
+                        <p>Trapezoidal MFs are useful when you want a range of values to have <em>full membership</em> rather than just a single peak point. This provides more stability against small variations in input values.</p>
+                    </div>
+
+                    <h3>Generalized Bell Membership Function</h3>
+                    <p>Most flexible MF with adjustable steepness. Defined by width (a), slope (b), and center (c).</p>
+
+                    <div class="formula">
+                        μ(x) = 1 / (1 + |((x - c) / a)|<sup>2b</sup>)
+                    </div>
+
+                    <div class="code-block">
+                        <div class="code-header">
+                            <span class="code-filename"><span class="icon">🐍</span>fts_core.py</span>
+                            <span class="code-language">python</span>
+                        </div>
+                        <pre><code class="code-with-lines"><span class="code-line"><span class="token-keyword">def</span> <span class="token-function">_bell_membership</span>(<span class="token-self">self</span>, x: <span class="token-builtin">float</span>) -> <span class="token-builtin">float</span>:</span>
+<span class="code-line">    <span class="token-string">"""</span></span>
+<span class="code-line"><span class="token-string">    Generalized bell-shaped membership function.</span></span>
+<span class="code-line"><span class="token-string">    </span></span>
+<span class="code-line"><span class="token-string">    Parameter 'b' controls the steepness of the curve:</span></span>
+<span class="code-line"><span class="token-string">    - b = 1: Gentle slope (like Gaussian)</span></span>
+<span class="code-line"><span class="token-string">    - b = 5: Steep slope (more rectangular)</span></span>
+<span class="code-line"><span class="token-string">    - b → ∞: Approaches rectangular shape</span></span>
+<span class="code-line"><span class="token-string">    """</span></span>
+<span class="code-line">    a = <span class="token-self">self</span>.parameters[<span class="token-string">'a'</span>]  <span class="token-comment"># Width parameter</span></span>
+<span class="code-line">    b = <span class="token-self">self</span>.parameters[<span class="token-string">'b'</span>]  <span class="token-comment"># Slope parameter (steepness)</span></span>
+<span class="code-line">    c = <span class="token-self">self</span>.parameters[<span class="token-string">'c'</span>]  <span class="token-comment"># Center point</span></span>
+<span class="code-line">    </span>
+<span class="code-line">    <span class="token-comment"># Handle edge case: if width is zero, return 1 at center only</span></span>
+<span class="code-line">    <span class="token-keyword">if</span> a == <span class="token-number">0</span>:</span>
+<span class="code-line">        <span class="token-keyword">return</span> <span class="token-number">1.0</span> <span class="token-keyword">if</span> x == c <span class="token-keyword">else</span> <span class="token-number">0.0</span></span>
+<span class="code-line">    </span>
+<span class="code-line">    <span class="token-comment"># The formula: as |x-c| increases, membership decreases</span></span>
+<span class="code-line">    <span class="token-keyword">return</span> <span class="token-number">1</span> / (<span class="token-number">1</span> + np.abs((x - c) / a) ** (<span class="token-number">2</span> * b))</span></code></pre>
+                    </div>
+
+                    <h3>Comparison of Membership Functions</h3>
+                    <div class="table-wrapper">
+                        <table>
+                            <thead>
+                                <tr>
+                                    <th>Type</th>
+                                    <th>Parameters</th>
+                                    <th>Advantages</th>
+                                    <th>Best For</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr>
+                                    <td><span class="badge badge-blue">Triangular</span></td>
+                                    <td>a, b, c</td>
+                                    <td>Simple, fast, interpretable</td>
+                                    <td>General purpose</td>
+                                </tr>
+                                <tr>
+                                    <td><span class="badge badge-green">Trapezoidal</span></td>
+                                    <td>a, b, c, d</td>
+                                    <td>Stable plateau region</td>
+                                    <td>Noise tolerance</td>
+                                </tr>
+                                <tr>
+                                    <td><span class="badge badge-purple">Gaussian</span></td>
+                                    <td>c, σ</td>
+                                    <td>Smooth, natural curves</td>
+                                    <td>Smooth data</td>
+                                </tr>
+                                <tr>
+                                    <td><span class="badge badge-orange">Bell</span></td>
+                                    <td>a, b, c</td>
+                                    <td>Adjustable steepness</td>
+                                    <td>Fine-tuning</td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </section>
+
+                <!-- ==========================================
+                     SECTION: FTS ALGORITHM
+                     ========================================== -->
+                <section id="fts-algorithm" class="doc-section">
+                    <h2>FTS Algorithm</h2>
+
+                    <p>The Fuzzy Time Series algorithm consists of two main phases: <strong>Training</strong> and <strong>Prediction</strong>.</p>
+
+                    <div class="diagram">
+┌─────────────────────────────────────────────────────────────────────────┐
+│                          <span class="hl-blue">TRAINING PHASE</span>                               │
+├─────────────────────────────────────────────────────────────────────────┤
+│                                                                         │
+│   Raw Data    ──►  Universe of    ──►  Fuzzy Set    ──►  Fuzzified     │
+│   [10,15,20]       Discourse           Partitions        Series        │
+│                    [8, 32]             [A1...A5]         [A1,A2,A3]    │
+│                                                                         │
+│                         │                                               │
+│                         ▼                                               │
+│                                                                         │
+│                    Generate FLRs    ──►   Group into FLRGs              │
+│                    A1→A2, A2→A3          A1→A2                          │
+│                    A2→A3, A3→A3          A2→A3                          │
+│                                          A3→A3,A4                       │
+│                                                                         │
+└─────────────────────────────────────────────────────────────────────────┘
+                                  │
+                                  ▼
+┌─────────────────────────────────────────────────────────────────────────┐
+│                         <span class="hl-green">PREDICTION PHASE</span>                              │
+├─────────────────────────────────────────────────────────────────────────┤
+│                                                                         │
+│   Input History  ──►  Fuzzify    ──►  Lookup FLRG  ──►  Defuzzify      │
+│   [28, 35]            [A4, A5]        A4,A5→A5         42.5             │
+│                                                                         │
+└─────────────────────────────────────────────────────────────────────────┘
+                    </div>
+
+                    <h3>Step 1: Define Universe of Discourse</h3>
+                    <p>The universe of discourse is the range of all possible values, with a margin added to handle values slightly outside the training data.</p>
+
+                    <div class="formula">
+                        U = [D<sub>min</sub> - margin, D<sub>max</sub> + margin]<br>
+                        where margin = (D<sub>max</sub> - D<sub>min</sub>) × 0.1
+                    </div>
+
+                    <div class="alert alert-info">
+                        <div class="alert-title">💡 Why Add a Margin?</div>
+                        <p>Test data might have values slightly outside the training range. The 10% margin ensures these values can still be properly fuzzified without extrapolation errors.</p>
+                    </div>
+
+                    <h3>Step 2: Create Fuzzy Set Partitions</h3>
+                    <p>The universe is divided into overlapping fuzzy sets:</p>
+
+                    <div class="code-block">
+                        <div class="code-header">
+                            <span class="code-filename"><span class="icon">🐍</span>fts_core.py - FuzzySetPartitioner</span>
+                            <span class="code-language">python</span>
+                        </div>
+                        <pre><code class="code-with-lines"><span class="code-line"><span class="token-keyword">def</span> <span class="token-function">_create_triangular_partitions</span>(<span class="token-self">self</span>) -> <span class="token-class">List</span>[<span class="token-class">FuzzySet</span>]:</span>
+<span class="code-line">    <span class="token-string">"""</span></span>
+<span class="code-line"><span class="token-string">    Create triangular fuzzy set partitions with 50% overlap.</span></span>
+<span class="code-line"><span class="token-string">    </span></span>
+<span class="code-line"><span class="token-string">    Why 50% overlap?</span></span>
+<span class="code-line"><span class="token-string">    - Ensures every value has meaningful membership in at least one set</span></span>
+<span class="code-line"><span class="token-string">    - Adjacent sets cross at μ = 0.5, providing balanced coverage</span></span>
+<span class="code-line"><span class="token-string">    """</span></span>
+<span class="code-line">    fuzzy_sets = []</span>
+<span class="code-line">    n = <span class="token-self">self</span>.num_partitions</span>
+<span class="code-line">    lower = <span class="token-self">self</span>.universe.lower_bound</span>
+<span class="code-line">    upper = <span class="token-self">self</span>.universe.upper_bound</span>
+<span class="code-line">    </span>
+<span class="code-line">    <span class="token-comment"># Calculate step size (distance between centers)</span></span>
+<span class="code-line">    <span class="token-comment"># For n sets, we need n-1 intervals</span></span>
+<span class="code-line highlighted">    step = (upper - lower) / (n - <span class="token-number">1</span>) <span class="token-keyword">if</span> n > <span class="token-number">1</span> <span class="token-keyword">else</span> (upper - lower)</span>
+<span class="code-line">    </span>
+<span class="code-line">    <span class="token-keyword">for</span> i <span class="token-keyword">in</span> <span class="token-builtin">range</span>(n):</span>
+<span class="code-line">        <span class="token-comment"># Center of this fuzzy set</span></span>
+<span class="code-line">        center = lower + i * step</span>
+<span class="code-line">        </span>
+<span class="code-line">        <span class="token-comment"># Triangle extends one step to each side</span></span>
+<span class="code-line">        left = center - step   <span class="token-comment"># Where membership starts rising</span></span>
+<span class="code-line">        right = center + step  <span class="token-comment"># Where membership finishes falling</span></span>
+<span class="code-line">        </span>
+<span class="code-line">        fuzzy_sets.append(<span class="token-class">FuzzySet</span>(</span>
+<span class="code-line">            name=<span class="token-string">f"</span>{<span class="token-self">self</span>.prefix}{i + <span class="token-number">1</span>}<span class="token-string">"</span>,  <span class="token-comment"># A1, A2, A3, ...</span></span>
+<span class="code-line">            mf_type=<span class="token-self">self</span>.mf_type,</span>
+<span class="code-line">            parameters={<span class="token-string">'a'</span>: left, <span class="token-string">'b'</span>: center, <span class="token-string">'c'</span>: right},</span>
+<span class="code-line">            center=center</span>
+<span class="code-line">        ))</span>
+<span class="code-line">    </span>
+<span class="code-line">    <span class="token-keyword">return</span> fuzzy_sets</span></code></pre>
+                    </div>
+
+                    <h3>Step 3: Fuzzify the Time Series</h3>
+                    <p>Each numerical value is converted to a fuzzy set label.</p>
+
+                    <div class="code-block">
+                        <div class="code-header">
+                            <span class="code-filename"><span class="icon">🐍</span>fts_core.py - FuzzyTimeSeries</span>
+                            <span class="code-language">python</span>
+                        </div>
+                        <pre><code class="code-with-lines"><span class="code-line"><span class="token-keyword">def</span> <span class="token-function">_fuzzify_value</span>(<span class="token-self">self</span>, value: <span class="token-builtin">float</span>) -> <span class="token-builtin">str</span>:</span>
+<span class="code-line">    <span class="token-string">"""</span></span>
+<span class="code-line"><span class="token-string">    Convert a crisp numerical value to a fuzzy set name.</span></span>
+<span class="code-line"><span class="token-string">    </span></span>
+<span class="code-line"><span class="token-string">    Method: Maximum Membership</span></span>
+<span class="code-line"><span class="token-string">    - Calculate membership degree in ALL fuzzy sets</span></span>
+<span class="code-line"><span class="token-string">    - Return the set with the highest membership</span></span>
+<span class="code-line"><span class="token-string">    </span></span>
+<span class="code-line"><span class="token-string">    Why maximum membership?</span></span>
+<span class="code-line"><span class="token-string">    - Simple and deterministic</span></span>
+<span class="code-line"><span class="token-string">    - Each value maps to exactly one fuzzy set</span></span>
+<span class="code-line"><span class="token-string">    - Enables discrete pattern matching in FLRGs</span></span>
+<span class="code-line"><span class="token-string">    """</span></span>
+<span class="code-line">    max_membership = <span class="token-number">-1</span>  <span class="token-comment"># Initialize with impossible value</span></span>
+<span class="code-line">    best_set_name = <span class="token-keyword">None</span></span>
+<span class="code-line">    </span>
+<span class="code-line">    <span class="token-comment"># Evaluate membership in each fuzzy set</span></span>
+<span class="code-line">    <span class="token-keyword">for</span> fuzzy_set <span class="token-keyword">in</span> <span class="token-self">self</span>.fuzzy_sets:</span>
+<span class="code-line">        <span class="token-comment"># Calculate how much 'value' belongs to this set</span></span>
+<span class="code-line">        membership = fuzzy_set.membership(value)</span>
+<span class="code-line">        </span>
+<span class="code-line">        <span class="token-comment"># Keep track of the highest membership</span></span>
+<span class="code-line">        <span class="token-keyword">if</span> membership > max_membership:</span>
+<span class="code-line">            max_membership = membership</span>
+<span class="code-line">            best_set_name = fuzzy_set.name</span>
+<span class="code-line">    </span>
+<span class="code-line">    <span class="token-keyword">return</span> best_set_name</span></code></pre>
+                    </div>
+
+                    <h3>Step 4: Generate FLRs</h3>
+                    <p>Fuzzy Logical Relations capture temporal patterns in the fuzzified series.</p>
+
+                    <div class="code-block">
+                        <div class="code-header">
+                            <span class="code-filename"><span class="icon">🐍</span>fts_core.py - FuzzyTimeSeries</span>
+                            <span class="code-language">python</span>
+                        </div>
+                        <pre><code class="code-with-lines"><span class="code-line"><span class="token-keyword">def</span> <span class="token-function">_generate_flrs</span>(<span class="token-self">self</span>):</span>
+<span class="code-line">    <span class="token-string">"""</span></span>
+<span class="code-line"><span class="token-string">    Generate Fuzzy Logical Relations from the fuzzified series.</span></span>
+<span class="code-line"><span class="token-string">    </span></span>
+<span class="code-line"><span class="token-string">    For order k, each FLR has the form:</span></span>
+<span class="code-line"><span class="token-string">        (F(t-k), F(t-k+1), ..., F(t-1)) → F(t)</span></span>
+<span class="code-line"><span class="token-string">    </span></span>
+<span class="code-line"><span class="token-string">    First-Order (k=1): A3 → A4</span></span>
+<span class="code-line"><span class="token-string">    Second-Order (k=2): (A2, A3) → A4</span></span>
+<span class="code-line"><span class="token-string">    Third-Order (k=3): (A1, A2, A3) → A4</span></span>
+<span class="code-line"><span class="token-string">    """</span></span>
+<span class="code-line">    <span class="token-self">self</span>.flrs = []</span>
+<span class="code-line">    n = <span class="token-builtin">len</span>(<span class="token-self">self</span>.fuzzified_series)</span>
+<span class="code-line">    </span>
+<span class="code-line">    <span class="token-comment"># Start from index 'order' (need 'order' previous values)</span></span>
+<span class="code-line">    <span class="token-keyword">for</span> t <span class="token-keyword">in</span> <span class="token-builtin">range</span>(<span class="token-self">self</span>.order, n):</span>
+<span class="code-line">        <span class="token-comment"># Antecedent: the previous k fuzzified values</span></span>
+<span class="code-line highlighted">        antecedent = <span class="token-builtin">tuple</span>(<span class="token-self">self</span>.fuzzified_series[t - <span class="token-self">self</span>.order : t])</span>
+<span class="code-line">        </span>
+<span class="code-line">        <span class="token-comment"># Consequent: the current fuzzified value</span></span>
+<span class="code-line">        consequent = <span class="token-self">self</span>.fuzzified_series[t]</span>
+<span class="code-line">        </span>
+<span class="code-line">        <span class="token-comment"># Create the FLR and store it</span></span>
+<span class="code-line">        flr = <span class="token-class">FuzzyLogicalRelation</span>(</span>
+<span class="code-line">            antecedent=antecedent,</span>
+<span class="code-line">            consequent=consequent</span>
+<span class="code-line">        )</span>
+<span class="code-line">        <span class="token-self">self</span>.flrs.append(flr)</span></code></pre>
+                    </div>
+
+                    <h3>Step 5: Group FLRs into FLRGs</h3>
+                    <p>FLRs with the same antecedent are grouped together.</p>
+
+                    <div class="code-block">
+                        <div class="code-header">
+                            <span class="code-filename"><span class="icon">🐍</span>fts_core.py - FuzzyTimeSeries</span>
+                            <span class="code-language">python</span>
+                        </div>
+                        <pre><code class="code-with-lines"><span class="code-line"><span class="token-keyword">def</span> <span class="token-function">_generate_flrgs</span>(<span class="token-self">self</span>):</span>
+<span class="code-line">    <span class="token-string">"""</span></span>
+<span class="code-line"><span class="token-string">    Generate Fuzzy Logical Relation Groups by grouping FLRs.</span></span>
+<span class="code-line"><span class="token-string">    </span></span>
+<span class="code-line"><span class="token-string">    Example:</span></span>
+<span class="code-line"><span class="token-string">        FLRs: A3→A4, A3→A3, A3→A4, A3→A5</span></span>
+<span class="code-line"><span class="token-string">        FLRG: A3 → {A3, A4, A5}</span></span>
+<span class="code-line"><span class="token-string">    </span></span>
+<span class="code-line"><span class="token-string">    The set of consequents represents all possible next states</span></span>
+<span class="code-line"><span class="token-string">    that have been observed following the antecedent pattern.</span></span>
+<span class="code-line"><span class="token-string">    """</span></span>
+<span class="code-line">    <span class="token-self">self</span>.flrgs = {}  <span class="token-comment"># Dictionary: antecedent → FLRG</span></span>
+<span class="code-line">    </span>
+<span class="code-line">    <span class="token-keyword">for</span> flr <span class="token-keyword">in</span> <span class="token-self">self</span>.flrs:</span>
+<span class="code-line">        <span class="token-comment"># Check if we've seen this antecedent before</span></span>
+<span class="code-line">        <span class="token-keyword">if</span> flr.antecedent <span class="token-keyword">not</span> <span class="token-keyword">in</span> <span class="token-self">self</span>.flrgs:</span>
+<span class="code-line">            <span class="token-comment"># Create new FLRG for this antecedent</span></span>
+<span class="code-line">            <span class="token-self">self</span>.flrgs[flr.antecedent] = <span class="token-class">FuzzyLogicalRelationGroup</span>(</span>
+<span class="code-line">                antecedent=flr.antecedent</span>
+<span class="code-line">            )</span>
+<span class="code-line">        </span>
+<span class="code-line">        <span class="token-comment"># Add this consequent to the group</span></span>
+<span class="code-line">        <span class="token-self">self</span>.flrgs[flr.antecedent].add_consequent(flr.consequent)</span></code></pre>
+                    </div>
+                </section>
+
+                <!-- ==========================================
+                     SECTION: FLR & FLRG
+                     ========================================== -->
+                <section id="flr-flrg" class="doc-section">
+                    <h2>FLR & FLRG Explained</h2>
+
+                    <h3>Fuzzy Logical Relation (FLR)</h3>
+                    <p>An FLR represents a single observed transition in the time series.</p>
+
+                    <div class="doc-item">
+                        <div class="doc-item-header">
+                            <div class="doc-item-signature">
+                                <span class="doc-item-type class">class</span>
+                                <span class="doc-item-name">FuzzyLogicalRelation</span>
+                            </div>
+                        </div>
+                        <div class="doc-item-body">
+                            <div class="doc-section">
+                                <div class="doc-section-title">Description</div>
+                                <p>Stores a single fuzzy logical relation representing a temporal pattern: "When the pattern is X, the next state is Y".</p>
+                            </div>
+                            <div class="doc-section">
+                                <div class="doc-section-title">Attributes</div>
+                                <ul class="param-list">
+                                    <li class="param-item">
+                                        <span class="param-name">antecedent</span>
+                                        <span class="param-type">Tuple[str]</span>
+                                        <span class="param-desc">The preceding fuzzy states (e.g., ('A2', 'A3') for order 2)</span>
+                                    </li>
+                                    <li class="param-item">
+                                        <span class="param-name">consequent</span>
+                                        <span class="param-type">str</span>
+                                        <span class="param-desc">The resulting fuzzy state (e.g., 'A4')</span>
+                                    </li>
+                                </ul>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="code-block">
+                        <div class="code-header">
+                            <span class="code-filename"><span class="icon">🐍</span>fts_core.py</span>
+                            <span class="code-language">python</span>
+                        </div>
+                        <pre><code class="code-with-lines"><span class="code-line"><span class="token-decorator">@dataclass</span></span>
+<span class="code-line"><span class="token-keyword">class</span> <span class="token-class">FuzzyLogicalRelation</span>:</span>
+<span class="code-line">    <span class="token-string">"""</span></span>
+<span class="code-line"><span class="token-string">    Represents a single Fuzzy Logical Relation.</span></span>
+<span class="code-line"><span class="token-string">    </span></span>
+<span class="code-line"><span class="token-string">    An FLR captures a single temporal transition observed in the data.</span></span>
+<span class="code-line"><span class="token-string">    For example, if the series goes [A2, A3, A4], we create FLRs:</span></span>
+<span class="code-line"><span class="token-string">        - Order 1: A2→A3, A3→A4</span></span>
+<span class="code-line"><span class="token-string">        - Order 2: (A2,A3)→A4</span></span>
+<span class="code-line"><span class="token-string">    """</span></span>
+<span class="code-line">    antecedent: <span class="token-class">Tuple</span>[<span class="token-builtin">str</span>, ...]  <span class="token-comment"># Previous state(s)</span></span>
+<span class="code-line">    consequent: <span class="token-builtin">str</span>              <span class="token-comment"># Next state</span></span>
+<span class="code-line">    </span>
+<span class="code-line">    <span class="token-keyword">def</span> <span class="token-function">__str__</span>(<span class="token-self">self</span>) -> <span class="token-builtin">str</span>:</span>
+<span class="code-line">        <span class="token-string">"""Human-readable representation."""</span></span>
+<span class="code-line">        <span class="token-keyword">if</span> <span class="token-builtin">len</span>(<span class="token-self">self</span>.antecedent) == <span class="token-number">1</span>:</span>
+<span class="code-line">            <span class="token-comment"># First-order: A3 → A4</span></span>
+<span class="code-line">            <span class="token-keyword">return</span> <span class="token-string">f"</span>{<span class="token-self">self</span>.antecedent[<span class="token-number">0</span>]}<span class="token-string"> → </span>{<span class="token-self">self</span>.consequent}<span class="token-string">"</span></span>
+<span class="code-line">        <span class="token-keyword">else</span>:</span>
+<span class="code-line">            <span class="token-comment"># High-order: (A2, A3) → A4</span></span>
+<span class="code-line">            ant_str = <span class="token-string">"("</span> + <span class="token-string">", "</span>.join(<span class="token-self">self</span>.antecedent) + <span class="token-string">")"</span></span>
+<span class="code-line">            <span class="token-keyword">return</span> <span class="token-string">f"</span>{ant_str}<span class="token-string"> → </span>{<span class="token-self">self</span>.consequent}<span class="token-string">"</span></span></code></pre>
+                    </div>
+
+                    <h3>Fuzzy Logical Relation Group (FLRG)</h3>
+                    <p>An FLRG groups all FLRs with the same antecedent, showing all possible next states.</p>
+
+                    <div class="doc-item">
+                        <div class="doc-item-header">
+                            <div class="doc-item-signature">
+                                <span class="doc-item-type class">class</span>
+                                <span class="doc-item-name">FuzzyLogicalRelationGroup</span>
+                            </div>
+                        </div>
+                        <div class="doc-item-body">
+                            <div class="doc-section">
+                                <div class="doc-section-title">Description</div>
+                                <p>Stores all possible consequents for a given antecedent pattern. Used during prediction to determine possible next states.</p>
+                            </div>
+                            <div class="doc-section">
+                                <div class="doc-section-title">Attributes</div>
+                                <ul class="param-list">
+                                    <li class="param-item">
+                                        <span class="param-name">antecedent</span>
+                                        <span class="param-type">Tuple[str]</span>
+                                        <span class="param-desc">The pattern that triggers this group</span>
+                                    </li>
+                                    <li class="param-item">
+                                        <span class="param-name">consequents</span>
+                                        <span class="param-type">List[str]</span>
+                                        <span class="param-desc">All observed next states (unique values)</span>
+                                    </li>
+                                </ul>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="code-block">
+                        <div class="code-header">
+                            <span class="code-filename"><span class="icon">🐍</span>fts_core.py</span>
+                            <span class="code-language">python</span>
+                        </div>
+                        <pre><code class="code-with-lines"><span class="code-line"><span class="token-decorator">@dataclass</span></span>
+<span class="code-line"><span class="token-keyword">class</span> <span class="token-class">FuzzyLogicalRelationGroup</span>:</span>
+<span class="code-line">    <span class="token-string">"""</span></span>
+<span class="code-line"><span class="token-string">    Groups all FLRs with the same antecedent.</span></span>
+<span class="code-line"><span class="token-string">    </span></span>
+<span class="code-line"><span class="token-string">    If we observe:</span></span>
+<span class="code-line"><span class="token-string">        A3 → A4</span></span>
+<span class="code-line"><span class="token-string">        A3 → A3</span></span>
+<span class="code-line"><span class="token-string">        A3 → A4</span></span>
+<span class="code-line"><span class="token-string">        A3 → A5</span></span>
+<span class="code-line"><span class="token-string">    </span></span>
+<span class="code-line"><span class="token-string">    The FLRG becomes: A3 → A3, A4, A5</span></span>
+<span class="code-line"><span class="token-string">    (Note: A4 appears once despite being observed twice)</span></span>
+<span class="code-line"><span class="token-string">    """</span></span>
+<span class="code-line">    antecedent: <span class="token-class">Tuple</span>[<span class="token-builtin">str</span>, ...]</span>
+<span class="code-line">    consequents: <span class="token-class">List</span>[<span class="token-builtin">str</span>] = field(default_factory=<span class="token-builtin">list</span>)</span>
+<span class="code-line">    </span>
+<span class="code-line">    <span class="token-keyword">def</span> <span class="token-function">add_consequent</span>(<span class="token-self">self</span>, consequent: <span class="token-builtin">str</span>):</span>
+<span class="code-line">        <span class="token-string">"""</span></span>
+<span class="code-line"><span class="token-string">        Add a consequent if not already present.</span></span>
+<span class="code-line"><span class="token-string">        </span></span>
+<span class="code-line"><span class="token-string">        We keep unique consequents only because:</span></span>
+<span class="code-line"><span class="token-string">        1. Defuzzification uses average of centers</span></span>
+<span class="code-line"><span class="token-string">        2. Duplicates would unfairly weight certain outcomes</span></span>
+<span class="code-line"><span class="token-string">        """</span></span>
+<span class="code-line">        <span class="token-keyword">if</span> consequent <span class="token-keyword">not</span> <span class="token-keyword">in</span> <span class="token-self">self</span>.consequents:</span>
+<span class="code-line">            <span class="token-self">self</span>.consequents.append(consequent)</span></code></pre>
+                    </div>
+
+                    <div class="alert alert-warning">
+                        <div class="alert-title">⚠️ Design Decision: Unique Consequents</div>
+                        <p>We store unique consequents (not counting duplicates) because our defuzzification method uses the average of centers. If A4 appeared 3 times and A3 appeared 1 time, including duplicates would bias the prediction toward A4. By keeping unique values, all observed outcomes are weighted equally.</p>
+                        <p>Alternative approaches could weight by frequency, but that requires more complex handling.</p>
+                    </div>
+                </section>
+
+                <!-- ==========================================
+                     SECTION: ALGORITHMS - DEFUZZIFICATION
+                     ========================================== -->
+                <section id="algo-defuzzification" class="doc-section">
+                    <h2>Defuzzification Algorithm</h2>
+
+                    <p>Defuzzification converts fuzzy set names back to crisp numerical values.</p>
+
+                    <h3>Method: Centroid Average</h3>
+                    <p>We use the average of fuzzy set centers as our defuzzification method.</p>
+
+                    <div class="formula">
+                        Prediction = (Σ center(A<sub>i</sub>)) / n<br>
+                        where A<sub>i</sub> are the consequent fuzzy sets
+                    </div>
+
+                    <div class="code-block">
+                        <div class="code-header">
+                            <span class="code-filename"><span class="icon">🐍</span>fts_core.py - FuzzyTimeSeries</span>
+                            <span class="code-language">python</span>
+                        </div>
+                        <pre><code class="code-with-lines"><span class="code-line"><span class="token-keyword">def</span> <span class="token-function">_defuzzify</span>(<span class="token-self">self</span>, fuzzy_set_names: <span class="token-class">List</span>[<span class="token-builtin">str</span>]) -> <span class="token-builtin">float</span>:</span>
+<span class="code-line">    <span class="token-string">"""</span></span>
+<span class="code-line"><span class="token-string">    Defuzzify by computing the average center of consequent fuzzy sets.</span></span>
+<span class="code-line"><span class="token-string">    </span></span>
+<span class="code-line"><span class="token-string">    This implements the centroid defuzzification method.</span></span>
+<span class="code-line"><span class="token-string">    </span></span>
+<span class="code-line"><span class="token-string">    Why centroid/average?</span></span>
+<span class="code-line"><span class="token-string">    - Simple and computationally efficient</span></span>
+<span class="code-line"><span class="token-string">    - Produces smooth, reasonable predictions</span></span>
+<span class="code-line"><span class="token-string">    - Well-suited for FTS where consequents are discrete sets</span></span>
+<span class="code-line"><span class="token-string">    </span></span>
+<span class="code-line"><span class="token-string">    Alternative methods:</span></span>
+<span class="code-line"><span class="token-string">    - Weighted average (by membership degree)</span></span>
+<span class="code-line"><span class="token-string">    - Maximum membership</span></span>
+<span class="code-line"><span class="token-string">    - Bisector method</span></span>
+<span class="code-line"><span class="token-string">    </span></span>
+<span class="code-line"><span class="token-string">    Args:</span></span>
+<span class="code-line"><span class="token-string">        fuzzy_set_names: List of consequent fuzzy set names</span></span>
+<span class="code-line"><span class="token-string">        </span></span>
+<span class="code-line"><span class="token-string">    Returns:</span></span>
+<span class="code-line"><span class="token-string">        Crisp predicted value</span></span>
+<span class="code-line"><span class="token-string">    """</span></span>
+<span class="code-line">    <span class="token-comment"># Handle edge case: no consequents</span></span>
+<span class="code-line">    <span class="token-keyword">if</span> <span class="token-keyword">not</span> fuzzy_set_names:</span>
+<span class="code-line">        <span class="token-comment"># Return middle of universe as default</span></span>
+<span class="code-line">        <span class="token-keyword">return</span> (<span class="token-self">self</span>.universe.lower_bound + <span class="token-self">self</span>.universe.upper_bound) / <span class="token-number">2</span></span>
+<span class="code-line">    </span>
+<span class="code-line">    <span class="token-comment"># Get center values for each consequent fuzzy set</span></span>
+<span class="code-line highlighted">    centers = [<span class="token-self">self</span>.fuzzy_set_map[name].center <span class="token-keyword">for</span> name <span class="token-keyword">in</span> fuzzy_set_names]</span>
+<span class="code-line">    </span>
+<span class="code-line">    <span class="token-comment"># Return the average of centers</span></span>
+<span class="code-line">    <span class="token-keyword">return</span> np.mean(centers)</span></code></pre>
+                    </div>
+
+                    <h3>Example Calculation</h3>
+                    <div class="alert alert-success">
+                        <div class="alert-title">📝 Worked Example</div>
+                        <p><strong>Given:</strong> FLRG is A4 → A3, A4, A5</p>
+                        <p><strong>Centers:</strong> A3 = 20, A4 = 26, A5 = 32</p>
+                        <p><strong>Calculation:</strong> (20 + 26 + 32) / 3 = 26</p>
+                        <p><strong>Prediction:</strong> 26</p>
+                    </div>
+                </section>
+
+                <!-- ==========================================
+                     SECTION: PREDICTION ALGORITHM
+                     ========================================== -->
+                <section id="algo-prediction" class="doc-section">
+                    <h2>Prediction Algorithm</h2>
+
+                    <p>The prediction algorithm combines fuzzification, FLRG lookup, and defuzzification.</p>
+
+                    <div class="code-block">
+                        <div class="code-header">
+                            <span class="code-filename"><span class="icon">🐍</span>fts_core.py - FuzzyTimeSeries.predict_next()</span>
+                            <span class="code-language">python</span>
+                        </div>
+                        <pre><code class="code-with-lines"><span class="code-line"><span class="token-keyword">def</span> <span class="token-function">predict_next</span>(<span class="token-self">self</span>, history: <span class="token-class">List</span>[<span class="token-builtin">float</span>]) -> <span class="token-builtin">float</span>:</span>
+<span class="code-line">    <span class="token-string">"""</span></span>
+<span class="code-line"><span class="token-string">    Predict the next value given a history of recent values.</span></span>
+<span class="code-line"><span class="token-string">    </span></span>
+<span class="code-line"><span class="token-string">    Algorithm:</span></span>
+<span class="code-line"><span class="token-string">    1. Take the last 'order' values from history</span></span>
+<span class="code-line"><span class="token-string">    2. Fuzzify each value to get a pattern (e.g., (A2, A3))</span></span>
+<span class="code-line"><span class="token-string">    3. Look up this pattern in FLRGs</span></span>
+<span class="code-line"><span class="token-string">    4. Defuzzify the consequents to get crisp prediction</span></span>
+<span class="code-line"><span class="token-string">    </span></span>
+<span class="code-line"><span class="token-string">    Args:</span></span>
+<span class="code-line"><span class="token-string">        history: List of recent values (length must be >= order)</span></span>
+<span class="code-line"><span class="token-string">        </span></span>
+<span class="code-line"><span class="token-string">    Returns:</span></span>
+<span class="code-line"><span class="token-string">        Predicted next value</span></span>
+<span class="code-line"><span class="token-string">    </span></span>
+<span class="code-line"><span class="token-string">    Raises:</span></span>
+<span class="code-line"><span class="token-string">        ValueError: If history length is less than order</span></span>
+<span class="code-line"><span class="token-string">    """</span></span>
+<span class="code-line">    <span class="token-comment"># Validate input length</span></span>
+<span class="code-line">    <span class="token-keyword">if</span> <span class="token-builtin">len</span>(history) < <span class="token-self">self</span>.order:</span>
+<span class="code-line">        <span class="token-keyword">raise</span> <span class="token-class">ValueError</span>(</span>
+<span class="code-line">            <span class="token-string">f"History length (</span>{<span class="token-builtin">len</span>(history)}<span class="token-string">) must be >= order (</span>{<span class="token-self">self</span>.order}<span class="token-string">)"</span></span>
+<span class="code-line">        )</span>
+<span class="code-line">    </span>
+<span class="code-line">    <span class="token-comment"># Step 1: Take only the last 'order' values</span></span>
+<span class="code-line highlighted">    recent = history[-<span class="token-self">self</span>.order:]</span>
+<span class="code-line">    </span>
+<span class="code-line">    <span class="token-comment"># Step 2: Fuzzify each recent value</span></span>
+<span class="code-line highlighted">    fuzzified = <span class="token-builtin">tuple</span>(<span class="token-self">self</span>._fuzzify_value(v) <span class="token-keyword">for</span> v <span class="token-keyword">in</span> recent)</span>
+<span class="code-line">    </span>
+<span class="code-line">    <span class="token-comment"># Step 3: Look up the FLRG</span></span>
+<span class="code-line">    <span class="token-keyword">if</span> fuzzified <span class="token-keyword">in</span> <span class="token-self">self</span>.flrgs:</span>
+<span class="code-line">        <span class="token-comment"># Exact match found</span></span>
+<span class="code-line">        consequents = <span class="token-self">self</span>.flrgs[fuzzified].consequents</span>
+<span class="code-line">    <span class="token-keyword">else</span>:</span>
+<span class="code-line">        <span class="token-comment"># No exact match - use nearest neighbor</span></span>
+<span class="code-line">        consequents = <span class="token-self">self</span>._find_nearest_flrg(fuzzified)</span>
+<span class="code-line">    </span>
+<span class="code-line">    <span class="token-comment"># Step 4: Defuzzify to get crisp output</span></span>
+<span class="code-line">    <span class="token-keyword">return</span> <span class="token-self">self</span>._defuzzify(consequents)</span></code></pre>
+                    </div>
+
+                    <h3>Nearest Neighbor Fallback</h3>
+                    <p>When the exact antecedent pattern isn't found in FLRGs, we find the most similar pattern.</p>
+
+                    <div class="code-block">
+                        <div class="code-header">
+                            <span class="code-filename"><span class="icon">🐍</span>fts_core.py - FuzzyTimeSeries._find_nearest_flrg()</span>
+                            <span class="code-language">python</span>
+                        </div>
+                        <pre><code class="code-with-lines"><span class="code-line"><span class="token-keyword">def</span> <span class="token-function">_find_nearest_flrg</span>(<span class="token-self">self</span>, target: <span class="token-class">Tuple</span>[<span class="token-builtin">str</span>, ...]) -> <span class="token-class">List</span>[<span class="token-builtin">str</span>]:</span>
+<span class="code-line">    <span class="token-string">"""</span></span>
+<span class="code-line"><span class="token-string">    Find the nearest FLRG when exact match is not found.</span></span>
+<span class="code-line"><span class="token-string">    </span></span>
+<span class="code-line"><span class="token-string">    Uses Manhattan distance on fuzzy set indices.</span></span>
+<span class="code-line"><span class="token-string">    </span></span>
+<span class="code-line"><span class="token-string">    Example:</span></span>
+<span class="code-line"><span class="token-string">        Target: (A3, A5)</span></span>
+<span class="code-line"><span class="token-string">        FLRG 1: (A3, A4) → distance = |3-3| + |5-4| = 1</span></span>
+<span class="code-line"><span class="token-string">        FLRG 2: (A2, A5) → distance = |3-2| + |5-5| = 1</span></span>
+<span class="code-line"><span class="token-string">        FLRG 3: (A1, A2) → distance = |3-1| + |5-2| = 5</span></span>
+<span class="code-line"><span class="token-string">    </span></span>
+<span class="code-line"><span class="token-string">    Why Manhattan distance?</span></span>
+<span class="code-line"><span class="token-string">    - Simple and fast to compute</span></span>
+<span class="code-line"><span class="token-string">    - Fuzzy sets are ordered (A1 < A2 < A3 ...)</span></span>
+<span class="code-line"><span class="token-string">    - Measures how "far apart" patterns are</span></span>
+<span class="code-line"><span class="token-string">    """</span></span>
+<span class="code-line">    <span class="token-comment"># Handle empty FLRGs</span></span>
+<span class="code-line">    <span class="token-keyword">if</span> <span class="token-keyword">not</span> <span class="token-self">self</span>.flrgs:</span>
+<span class="code-line">        <span class="token-keyword">return</span> [<span class="token-self">self</span>.fuzzy_sets[<span class="token-builtin">len</span>(<span class="token-self">self</span>.fuzzy_sets) // <span class="token-number">2</span>].name]</span>
+<span class="code-line">    </span>
+<span class="code-line">    <span class="token-comment"># Helper: convert fuzzy set name to index</span></span>
+<span class="code-line">    <span class="token-keyword">def</span> <span class="token-function">get_index</span>(name: <span class="token-builtin">str</span>) -> <span class="token-builtin">int</span>:</span>
+<span class="code-line">        <span class="token-keyword">for</span> i, fs <span class="token-keyword">in</span> <span class="token-builtin">enumerate</span>(<span class="token-self">self</span>.fuzzy_sets):</span>
+<span class="code-line">            <span class="token-keyword">if</span> fs.name == name:</span>
+<span class="code-line">                <span class="token-keyword">return</span> i</span>
+<span class="code-line">        <span class="token-keyword">return</span> <span class="token-number">0</span></span>
+<span class="code-line">    </span>
+<span class="code-line">    <span class="token-comment"># Convert target pattern to indices</span></span>
+<span class="code-line">    target_indices = [get_index(name) <span class="token-keyword">for</span> name <span class="token-keyword">in</span> target]</span>
+<span class="code-line">    </span>
+<span class="code-line">    <span class="token-comment"># Find FLRG with minimum distance</span></span>
+<span class="code-line">    min_distance = <span class="token-builtin">float</span>(<span class="token-string">'inf'</span>)</span>
+<span class="code-line">    best_flrg = <span class="token-keyword">None</span></span>
+<span class="code-line">    </span>
+<span class="code-line">    <span class="token-keyword">for</span> antecedent, flrg <span class="token-keyword">in</span> <span class="token-self">self</span>.flrgs.items():</span>
+<span class="code-line">        <span class="token-comment"># Convert this antecedent to indices</span></span>
+<span class="code-line">        ant_indices = [get_index(name) <span class="token-keyword">for</span> name <span class="token-keyword">in</span> antecedent]</span>
+<span class="code-line">        </span>
+<span class="code-line">        <span class="token-comment"># Calculate Manhattan distance</span></span>
+<span class="code-line highlighted">        distance = <span class="token-builtin">sum</span>(<span class="token-builtin">abs</span>(t - a) <span class="token-keyword">for</span> t, a <span class="token-keyword">in</span> <span class="token-builtin">zip</span>(target_indices, ant_indices))</span>
+<span class="code-line">        </span>
+<span class="code-line">        <span class="token-keyword">if</span> distance < min_distance:</span>
+<span class="code-line">            min_distance = distance</span>
+<span class="code-line">            best_flrg = flrg</span>
+<span class="code-line">    </span>
+<span class="code-line">    <span class="token-keyword">return</span> best_flrg.consequents <span class="token-keyword">if</span> best_flrg <span class="token-keyword">else</span> [<span class="token-self">self</span>.fuzzy_sets[<span class="token-number">0</span>].name]</span></code></pre>
+                    </div>
+                </section>
+
+                <!-- ==========================================
+                     SECTION: METRICS
+                     ========================================== -->
+                <section id="class-metrics" class="doc-section">
+                    <h2>Performance Metrics</h2>
+
+                    <div class="doc-item">
+                        <div class="doc-item-header">
+                            <div class="doc-item-signature">
+                                <span class="doc-item-type class">class</span>
+                                <span class="doc-item-name">FTSMetrics</span>
+                            </div>
+                        </div>
+                        <div class="doc-item-body">
+                            <div class="doc-section">
+                                <div class="doc-section-title">Description</div>
+                                <p>Calculates performance metrics for evaluating FTS model accuracy. All methods handle NaN values gracefully.</p>
+                            </div>
+                            <div class="doc-section">
+                                <div class="doc-section-title">Static Methods</div>
+                                <ul class="param-list">
+                                    <li class="param-item">
+                                        <span class="param-name">rmse()</span>
+                                        <span class="param-type">→ float</span>
+                                        <span class="param-desc">Root Mean Square Error</span>
+                                    </li>
+                                    <li class="param-item">
+                                        <span class="param-name">mae()</span>
+                                        <span class="param-type">→ float</span>
+                                        <span class="param-desc">Mean Absolute Error</span>
+                                    </li>
+                                    <li class="param-item">
+                                        <span class="param-name">mape()</span>
+                                        <span class="param-type">→ float</span>
+                                        <span class="param-desc">Mean Absolute Percentage Error</span>
+                                    </li>
+                                    <li class="param-item">
+                                        <span class="param-name">all_metrics()</span>
+                                        <span class="param-type">→ Dict</span>
+                                        <span class="param-desc">Calculate all metrics at once</span>
+                                    </li>
+                                </ul>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="code-block">
+                        <div class="code-header">
+                            <span class="code-filename"><span class="icon">🐍</span>fts_core.py - FTSMetrics</span>
+                            <span class="code-language">python</span>
+                        </div>
+                        <pre><code class="code-with-lines"><span class="code-line"><span class="token-keyword">class</span> <span class="token-class">FTSMetrics</span>:</span>
+<span class="code-line">    <span class="token-string">"""Calculates performance metrics for FTS models."""</span></span>
+<span class="code-line">    </span>
+<span class="code-line">    <span class="token-decorator">@staticmethod</span></span>
+<span class="code-line">    <span class="token-keyword">def</span> <span class="token-function">rmse</span>(actual: np.ndarray, predicted: np.ndarray) -> <span class="token-builtin">float</span>:</span>
+<span class="code-line">        <span class="token-string">"""</span></span>
+<span class="code-line"><span class="token-string">        Root Mean Square Error.</span></span>
+<span class="code-line"><span class="token-string">        </span></span>
+<span class="code-line"><span class="token-string">        RMSE = √(mean((actual - predicted)²))</span></span>
+<span class="code-line"><span class="token-string">        </span></span>
+<span class="code-line"><span class="token-string">        Properties:</span></span>
+<span class="code-line"><span class="token-string">        - Same units as the data</span></span>
+<span class="code-line"><span class="token-string">        - Penalizes large errors more heavily (due to squaring)</span></span>
+<span class="code-line"><span class="token-string">        - Most common metric for regression tasks</span></span>
+<span class="code-line"><span class="token-string">        """</span></span>
+<span class="code-line">        <span class="token-comment"># Create mask to remove NaN values</span></span>
+<span class="code-line">        mask = ~np.isnan(predicted) & ~np.isnan(actual)</span>
+<span class="code-line">        actual_clean = actual[mask]</span>
+<span class="code-line">        predicted_clean = predicted[mask]</span>
+<span class="code-line">        </span>
+<span class="code-line">        <span class="token-keyword">if</span> <span class="token-builtin">len</span>(actual_clean) == <span class="token-number">0</span>:</span>
+<span class="code-line">            <span class="token-keyword">return</span> np.nan</span>
+<span class="code-line">        </span>
+<span class="code-line highlighted">        <span class="token-keyword">return</span> np.sqrt(np.mean((actual_clean - predicted_clean) ** <span class="token-number">2</span>))</span>
+<span class="code-line">    </span>
+<span class="code-line">    <span class="token-decorator">@staticmethod</span></span>
+<span class="code-line">    <span class="token-keyword">def</span> <span class="token-function">mae</span>(actual: np.ndarray, predicted: np.ndarray) -> <span class="token-builtin">float</span>:</span>
+<span class="code-line">        <span class="token-string">"""</span></span>
+<span class="code-line"><span class="token-string">        Mean Absolute Error.</span></span>
+<span class="code-line"><span class="token-string">        </span></span>
+<span class="code-line"><span class="token-string">        MAE = mean(|actual - predicted|)</span></span>
+<span class="code-line"><span class="token-string">        </span></span>
+<span class="code-line"><span class="token-string">        Properties:</span></span>
+<span class="code-line"><span class="token-string">        - Same units as the data</span></span>
+<span class="code-line"><span class="token-string">        - More robust to outliers than RMSE</span></span>
+<span class="code-line"><span class="token-string">        - Easier to interpret (average error magnitude)</span></span>
+<span class="code-line"><span class="token-string">        """</span></span>
+<span class="code-line">        mask = ~np.isnan(predicted) & ~np.isnan(actual)</span>
+<span class="code-line">        actual_clean = actual[mask]</span>
+<span class="code-line">        predicted_clean = predicted[mask]</span>
+<span class="code-line">        </span>
+<span class="code-line">        <span class="token-keyword">if</span> <span class="token-builtin">len</span>(actual_clean) == <span class="token-number">0</span>:</span>
+<span class="code-line">            <span class="token-keyword">return</span> np.nan</span>
+<span class="code-line">        </span>
+<span class="code-line highlighted">        <span class="token-keyword">return</span> np.mean(np.abs(actual_clean - predicted_clean))</span>
+<span class="code-line">    </span>
+<span class="code-line">    <span class="token-decorator">@staticmethod</span></span>
+<span class="code-line">    <span class="token-keyword">def</span> <span class="token-function">mape</span>(actual: np.ndarray, predicted: np.ndarray) -> <span class="token-builtin">float</span>:</span>
+<span class="code-line">        <span class="token-string">"""</span></span>
+<span class="code-line"><span class="token-string">        Mean Absolute Percentage Error.</span></span>
+<span class="code-line"><span class="token-string">        </span></span>
+<span class="code-line"><span class="token-string">        MAPE = mean(|actual - predicted| / |actual|) × 100</span></span>
+<span class="code-line"><span class="token-string">        </span></span>
+<span class="code-line"><span class="token-string">        Properties:</span></span>
+<span class="code-line"><span class="token-string">        - Scale-independent (percentage)</span></span>
+<span class="code-line"><span class="token-string">        - Undefined when actual = 0</span></span>
+<span class="code-line"><span class="token-string">        - Can be very high for small actual values</span></span>
+<span class="code-line"><span class="token-string">        </span></span>
+<span class="code-line"><span class="token-string">        Note: Excludes zero actual values to avoid division by zero.</span></span>
+<span class="code-line"><span class="token-string">        """</span></span>
+<span class="code-line">        <span class="token-comment"># Exclude zeros and NaNs</span></span>
+<span class="code-line">        mask = ~np.isnan(predicted) & ~np.isnan(actual) & (actual != <span class="token-number">0</span>)</span>
+<span class="code-line">        actual_clean = actual[mask]</span>
+<span class="code-line">        predicted_clean = predicted[mask]</span>
+<span class="code-line">        </span>
+<span class="code-line">        <span class="token-keyword">if</span> <span class="token-builtin">len</span>(actual_clean) == <span class="token-number">0</span>:</span>
+<span class="code-line">            <span class="token-keyword">return</span> np.nan</span>
+<span class="code-line">        </span>
+<span class="code-line highlighted">        <span class="token-keyword">return</span> np.mean(np.abs((actual_clean - predicted_clean) / actual_clean)) * <span class="token-number">100</span></span></code></pre>
+                    </div>
+                </section>
+
+                <!-- ==========================================
+                     SECTION: DEPENDENCIES
+                     ========================================== -->
+                <section id="dep-numpy" class="doc-section">
+                    <h2>Dependencies</h2>
+
+                    <h3>NumPy</h3>
+                    <div class="alert alert-info">
+                        <div class="alert-title">📦 NumPy (Numerical Python)</div>
+                        <p><strong>What it is:</strong> The fundamental package for scientific computing in Python.</p>
+                        <p><strong>Why we need it:</strong></p>
+                        <ul>
+                            <li>Fast array operations (10-100x faster than Python lists)</li>
+                            <li>Mathematical functions: <code>np.exp()</code>, <code>np.sqrt()</code>, <code>np.mean()</code></li>
+                            <li>Array slicing and filtering</li>
+                            <li>NaN handling for missing data</li>
+                        </ul>
+                    </div>
+
+                    <div class="code-block">
+                        <div class="code-header">
+                            <span class="code-filename"><span class="icon">🐍</span>Usage in fts_core.py</span>
+                            <span class="code-language">python</span>
+                        </div>
+                        <pre><code><span class="token-keyword">import</span> numpy <span class="token-keyword">as</span> np
+
+<span class="token-comment"># Array creation</span>
+data = np.array([<span class="token-number">1</span>, <span class="token-number">2</span>, <span class="token-number">3</span>, <span class="token-number">4</span>, <span class="token-number">5</span>])
+
+<span class="token-comment"># Mathematical operations</span>
+gaussian = np.exp(-((x - c) ** <span class="token-number">2</span>) / (<span class="token-number">2</span> * sigma ** <span class="token-number">2</span>))  <span class="token-comment"># e^x</span>
+rmse = np.sqrt(np.mean(errors ** <span class="token-number">2</span>))  <span class="token-comment"># √(mean(x²))</span>
+
+<span class="token-comment"># NaN handling</span>
+mask = ~np.isnan(predictions)  <span class="token-comment"># Filter out NaN values</span>
+clean_data = data[mask]</code></pre>
+                    </div>
+
+                    <h3 id="dep-pandas">Pandas</h3>
+                    <div class="alert alert-info">
+                        <div class="alert-title">📦 Pandas</div>
+                        <p><strong>What it is:</strong> Data manipulation and analysis library.</p>
+                        <p><strong>Why we need it:</strong></p>
+                        <ul>
+                            <li>Reading CSV files: <code>pd.read_csv()</code></li>
+                            <li>Reading Excel files: <code>pd.read_excel()</code></li>
+                            <li>DataFrame operations for results storage</li>
+                        </ul>
+                    </div>
+
+                    <div class="code-block">
+                        <div class="code-header">
+                            <span class="code-filename"><span class="icon">🐍</span>Usage in fts_data.py</span>
+                            <span class="code-language">python</span>
+                        </div>
+                        <pre><code><span class="token-keyword">import</span> pandas <span class="token-keyword">as</span> pd
+
+<span class="token-comment"># Read CSV file</span>
+df = pd.read_csv(<span class="token-string">'mackey_glass.csv'</span>)
+values = df[<span class="token-string">'value'</span>].values  <span class="token-comment"># Convert to NumPy array</span>
+
+<span class="token-comment"># Read Excel file</span>
+df = pd.read_excel(<span class="token-string">'data.xlsx'</span>, header=<span class="token-number">1</span>)
+
+<span class="token-comment"># Save results</span>
+results_df = pd.DataFrame(experiment_results)
+results_df.to_csv(<span class="token-string">'results.csv'</span>, index=<span class="token-keyword">False</span>)</code></pre>
+                    </div>
+
+                    <h3 id="dep-matplotlib">Matplotlib</h3>
+                    <div class="alert alert-info">
+                        <div class="alert-title">📦 Matplotlib</div>
+                        <p><strong>What it is:</strong> Comprehensive plotting library.</p>
+                        <p><strong>Why we need it:</strong></p>
+                        <ul>
+                            <li>Membership function visualizations</li>
+                            <li>Time series plots (actual vs predicted)</li>
+                            <li>Heatmaps for parameter analysis</li>
+                            <li>Saving plots to PNG files</li>
+                        </ul>
+                    </div>
+
+                    <div class="code-block">
+                        <div class="code-header">
+                            <span class="code-filename"><span class="icon">🐍</span>Usage in fts_visualization.py</span>
+                            <span class="code-language">python</span>
+                        </div>
+                        <pre><code><span class="token-keyword">import</span> matplotlib.pyplot <span class="token-keyword">as</span> plt
+
+<span class="token-comment"># Create figure</span>
+fig, ax = plt.subplots(figsize=(<span class="token-number">12</span>, <span class="token-number">6</span>))
+
+<span class="token-comment"># Plot time series</span>
+ax.plot(actual, label=<span class="token-string">'Actual'</span>, color=<span class="token-string">'blue'</span>)
+ax.plot(predicted, label=<span class="token-string">'Predicted'</span>, color=<span class="token-string">'red'</span>, linestyle=<span class="token-string">'--'</span>)
+
+<span class="token-comment"># Add labels and legend</span>
+ax.set_xlabel(<span class="token-string">'Time'</span>)
+ax.set_ylabel(<span class="token-string">'Value'</span>)
+ax.legend()
+
+<span class="token-comment"># Save to file</span>
+plt.savefig(<span class="token-string">'predictions.png'</span>, dpi=<span class="token-number">150</span>, bbox_inches=<span class="token-string">'tight'</span>)
+plt.close()</code></pre>
+                    </div>
+                </section>
+
+                <!-- ==========================================
+                     FOOTER
+                     ========================================== -->
+                <footer style="margin-top: var(--spacing-2xl); padding: var(--spacing-xl) 0; border-top: 1px solid var(--border-color); text-align: center;">
+                    <p style="color: var(--text-muted);">
+                        Fuzzy Time Series Documentation • Complete Technical Reference
+                    </p>
+                    <p style="color: var(--text-muted); font-size: var(--font-size-sm); margin-top: var(--spacing-sm);">
+                        Generated for educational purposes. All code explained line by line.
+                    </p>
+                </footer>
+
+            </div>
+        </main>
+    </div>
+
+    <!-- ===========================================
+         JAVASCRIPT
+         =========================================== -->
+    <script>
+        // ==========================================
+        // SIDEBAR TOGGLE (Mobile)
+        // ==========================================
+        function toggleSidebar() {
+            const sidebar = document.getElementById('sidebar');
+            sidebar.classList.toggle('open');
+        }
+
+        // Close sidebar when clicking outside on mobile
+        document.addEventListener('click', function(e) {
+            const sidebar = document.getElementById('sidebar');
+            const toggle = document.querySelector('.mobile-toggle');
+            
+            if (window.innerWidth <= 768 && 
+                sidebar.classList.contains('open') &&
+                !sidebar.contains(e.target) &&
+                !toggle.contains(e.target)) {
+                sidebar.classList.remove('open');
+            }
+        });
+
+        // ==========================================
+        // ACTIVE NAV LINK HIGHLIGHTING
+        // ==========================================
+        function updateActiveNav() {
+            const sections = document.querySelectorAll('section[id]');
+            const navLinks = document.querySelectorAll('.nav-link');
+            
+            let currentSection = '';
+            
+            sections.forEach(section => {
+                const sectionTop = section.offsetTop;
+                const sectionHeight = section.clientHeight;
+                
+                if (window.scrollY >= sectionTop - 100) {
+                    currentSection = section.getAttribute('id');
+                }
+            });
+            
+            navLinks.forEach(link => {
+                link.classList.remove('active');
+                if (link.getAttribute('href') === `#${currentSection}`) {
+                    link.classList.add('active');
+                }
+            });
+        }
+
+        window.addEventListener('scroll', updateActiveNav);
+
+        // ==========================================
+        // READING PROGRESS
+        // ==========================================
+        function updateProgress() {
+            const scrollTop = window.scrollY;
+            const docHeight = document.documentElement.scrollHeight - window.innerHeight;
+            const progress = (scrollTop / docHeight) * 100;
+            
+            document.getElementById('progress-fill').style.width = `${progress}%`;
+            document.getElementById('progress-text').textContent = `${Math.round(progress)}% complete`;
+        }
+
+        window.addEventListener('scroll', updateProgress);
+
+        // ==========================================
+        // COLLAPSIBLE SECTIONS
+        // ==========================================
+        document.querySelectorAll('.collapsible-header').forEach(header => {
+            header.addEventListener('click', () => {
+                const collapsible = header.parentElement;
+                collapsible.classList.toggle('open');
+            });
+        });
+
+        // ==========================================
+        // SEARCH FUNCTIONALITY
+        // ==========================================
+        function handleSearch(event) {
+            const query = event.target.value.toLowerCase();
+            const navLinks = document.querySelectorAll('.nav-link');
+            
+            if (query.length === 0) {
+                navLinks.forEach(link => {
+                    link.parentElement.style.display = 'block';
+                });
+                return;
+            }
+            
+            navLinks.forEach(link => {
+                const text = link.textContent.toLowerCase();
+                if (text.includes(query)) {
+                    link.parentElement.style.display = 'block';
+                } else {
+                    link.parentElement.style.display = 'none';
+                }
+            });
+        }
+
+        // ==========================================
+        // SMOOTH SCROLL FOR ANCHOR LINKS
+        // ==========================================
+        document.querySelectorAll('a[href^="#"]').forEach(anchor => {
+            anchor.addEventListener('click', function(e) {
+                e.preventDefault();
+                const target = document.querySelector(this.getAttribute('href'));
+                if (target) {
+                    target.scrollIntoView({
+                        behavior: 'smooth',
+                        block: 'start'
+                    });
+                    
+                    // Close sidebar on mobile after navigation
+                    if (window.innerWidth <= 768) {
+                        document.getElementById('sidebar').classList.remove('open');
+                    }
+                }
+            });
+        });
+
+        // ==========================================
+        // TAB FUNCTIONALITY
+        // ==========================================
+        document.querySelectorAll('.tab-button').forEach(button => {
+            button.addEventListener('click', () => {
+                const tabGroup = button.closest('.tabs');
+                const tabName = button.dataset.tab;
+                
+                // Update buttons
+                tabGroup.querySelectorAll('.tab-button').forEach(b => b.classList.remove('active'));
+                button.classList.add('active');
+                
+                // Update content
+                tabGroup.querySelectorAll('.tab-content').forEach(content => {
+                    content.classList.remove('active');
+                    if (content.dataset.tab === tabName) {
+                        content.classList.add('active');
+                    }
+                });
+            });
+        });
+
+        // ==========================================
+        // INITIALIZE
+        // ==========================================
+        document.addEventListener('DOMContentLoaded', () => {
+            updateActiveNav();
+            updateProgress();
+        });
+    </script>
+</body>
+</html>
