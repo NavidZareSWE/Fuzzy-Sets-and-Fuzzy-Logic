@@ -666,12 +666,12 @@
                 </ul>
 
                 <div class="diagram">
-Time →   t₁    t₂    t₃    t₄    t₅    t₆    t₇
+Time ->   t₁    t₂    t₃    t₄    t₅    t₆    t₇
          │     │     │     │     │     │     │
 Value    100   102   99    105   103   108   110
          │     │     │     │     │     │     │
          └─────┴─────┴─────┴─────┴─────┴─────┘
-                   Historical Data            → Future?
+                   Historical Data            -> Future?
                 </div>
 
                 <h3>2.2 What is a Fuzzy Set?</h3>
@@ -778,7 +778,7 @@ This ensures every value has meaningful membership.
                 <div class="info-box success">
                     <div class="info-box-title">📌 Example</div>
                     <p>If today's data point fuzzifies to A3, and tomorrow's fuzzifies to A4, we create:</p>
-                    <p style="text-align: center; font-size: 1.2rem;"><code>A3 → A4</code></p>
+                    <p style="text-align: center; font-size: 1.2rem;"><code>A3 -> A4</code></p>
                     <p>This means "Medium tends to be followed by Medium-High"</p>
                 </div>
 
@@ -787,10 +787,10 @@ This ensures every value has meaningful membership.
                 
                 <div class="diagram">
 Individual FLRs:          Grouped FLRG:
-    A3 → A4               A3 → A2, A3, A4
-    A3 → A3               (All possible next states
-    A3 → A2                when current state is A3)
-    A3 → A4
+    A3 -> A4               A3 -> A2, A3, A4
+    A3 -> A3               (All possible next states
+    A3 -> A2                when current state is A3)
+    A3 -> A4
                 </div>
 
                 <h3>2.8 First-Order vs High-Order FTS</h3>
@@ -804,12 +804,12 @@ Individual FLRs:          Grouped FLRG:
                     <tr>
                         <td>First-Order (FOFTS)</td>
                         <td>1 previous value</td>
-                        <td>F(t) → F(t+1)</td>
+                        <td>F(t) -> F(t+1)</td>
                     </tr>
                     <tr>
                         <td>High-Order (HOFTS)</td>
                         <td>k previous values</td>
-                        <td>(F(t-k+1), ..., F(t)) → F(t+1)</td>
+                        <td>(F(t-k+1), ..., F(t)) -> F(t+1)</td>
                     </tr>
                 </table>
 
@@ -822,12 +822,12 @@ Individual FLRs:          Grouped FLRG:
                 <div class="diagram">
 FIRST-ORDER (k=1):
   Uses: [t-1]
-  Pattern: A3 → A4
+  Pattern: A3 -> A4
   "If yesterday was Medium, tomorrow is Medium-High"
 
 HIGH-ORDER (k=3):
   Uses: [t-3, t-2, t-1]
-  Pattern: (A2, A3, A3) → A4
+  Pattern: (A2, A3, A3) -> A4
   "If three days ago was Low, two days ago was Medium, 
    yesterday was Medium, tomorrow is Medium-High"
                 </div>
@@ -938,7 +938,7 @@ END FUNCTION</code></pre>
         # Get consequent (current value)
         consequent = fuzzified_series[t]
         
-        CREATE FLR(antecedent → consequent)
+        CREATE FLR(antecedent -> consequent)
         ADD to flrs
     END FOR
     
@@ -1032,23 +1032,23 @@ Fuzzy Sets:
                 <p><strong>Fuzzified Series:</strong> [A1, A2, A3, A3, A4, A5, A4]</p>
 
                 <h4>Step 4: Generate FLRs (Order=1)</h4>
-                <pre><code>A1 → A2
-A2 → A3
-A3 → A3
-A3 → A4
-A4 → A5
-A5 → A4</code></pre>
+                <pre><code>A1 -> A2
+A2 -> A3
+A3 -> A3
+A3 -> A4
+A4 -> A5
+A5 -> A4</code></pre>
 
                 <h4>Step 5: Group into FLRGs</h4>
-                <pre><code>A1 → A2
-A2 → A3
-A3 → A3, A4  (grouped two A3→ rules)
-A4 → A5
-A5 → A4</code></pre>
+                <pre><code>A1 -> A2
+A2 -> A3
+A3 -> A3, A4  (grouped two A3-> rules)
+A4 -> A5
+A5 -> A4</code></pre>
 
                 <h4>Step 6: Predict Next Value</h4>
                 <p>Current fuzzified state is A4 (from value 28).</p>
-                <p>Look up FLRG: A4 → A5</p>
+                <p>Look up FLRG: A4 -> A5</p>
                 <p>Defuzzify: center of A5 = 32</p>
                 <p><strong>Prediction: 32</strong></p>
             </section>
@@ -1181,7 +1181,7 @@ A5 → A4</code></pre>
     
     Method: Centroid (average of centers)
     
-    If FLRG A3 → A2, A4, A5:
+    If FLRG A3 -> A2, A4, A5:
         Centers: A2=14, A4=26, A5=32
         Prediction = (14 + 26 + 32) / 3 = 24
     """
@@ -2261,15 +2261,15 @@ Total combinations: 5 × 7 × 4 = 140 experiments</code></pre>
                 </table>
                 
                 <h4>FLRs (Order = ${order})</h4>
-                <pre>${flrs.map(f => `${f.antecedent} → ${f.consequent}`).join('\n')}</pre>
+                <pre>${flrs.map(f => `${f.antecedent} -> ${f.consequent}`).join('\n')}</pre>
                 
                 <h4>FLRGs</h4>
-                <pre>${Object.entries(flrgs).map(([k, v]) => `${k} → ${Array.from(v).join(', ')}`).join('\n')}</pre>
+                <pre>${Object.entries(flrgs).map(([k, v]) => `${k} -> ${Array.from(v).join(', ')}`).join('\n')}</pre>
                 
                 <div class="info-box success">
                     <div class="info-box-title">🔮 Prediction</div>
                     <p>Current state: <strong>${lastAntecedent}</strong></p>
-                    <p>FLRG: ${lastAntecedent} → <strong>${prediction}</strong></p>
+                    <p>FLRG: ${lastAntecedent} -> <strong>${prediction}</strong></p>
                     <p>Predicted next value: <strong>${predictedValue}</strong></p>
                 </div>
             `;

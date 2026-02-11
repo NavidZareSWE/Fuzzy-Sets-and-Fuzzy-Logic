@@ -1482,7 +1482,7 @@ pip install numpy pandas matplotlib openpyxl</code></pre>
 <span class="code-line"><span class="token-string">    Parameter 'b' controls the steepness of the curve:</span></span>
 <span class="code-line"><span class="token-string">    - b = 1: Gentle slope (like Gaussian)</span></span>
 <span class="code-line"><span class="token-string">    - b = 5: Steep slope (more rectangular)</span></span>
-<span class="code-line"><span class="token-string">    - b → ∞: Approaches rectangular shape</span></span>
+<span class="code-line"><span class="token-string">    - b -> ∞: Approaches rectangular shape</span></span>
 <span class="code-line"><span class="token-string">    """</span></span>
 <span class="code-line">    a = <span class="token-self">self</span>.parameters[<span class="token-string">'a'</span>]  <span class="token-comment"># Width parameter</span></span>
 <span class="code-line">    b = <span class="token-self">self</span>.parameters[<span class="token-string">'b'</span>]  <span class="token-comment"># Slope parameter (steepness)</span></span>
@@ -1558,9 +1558,9 @@ pip install numpy pandas matplotlib openpyxl</code></pre>
 │                         ▼                                               │
 │                                                                         │
 │                    Generate FLRs    ──►   Group into FLRGs              │
-│                    A1→A2, A2→A3          A1→A2                          │
-│                    A2→A3, A3→A3          A2→A3                          │
-│                                          A3→A3,A4                       │
+│                    A1->A2, A2->A3          A1->A2                          │
+│                    A2->A3, A3->A3          A2->A3                          │
+│                                          A3->A3,A4                       │
 │                                                                         │
 └─────────────────────────────────────────────────────────────────────────┘
                                   │
@@ -1570,7 +1570,7 @@ pip install numpy pandas matplotlib openpyxl</code></pre>
 ├─────────────────────────────────────────────────────────────────────────┤
 │                                                                         │
 │   Input History  ──►  Fuzzify    ──►  Lookup FLRG  ──►  Defuzzify      │
-│   [28, 35]            [A4, A5]        A4,A5→A5         42.5             │
+│   [28, 35]            [A4, A5]        A4,A5->A5         42.5             │
 │                                                                         │
 └─────────────────────────────────────────────────────────────────────────┘
                     </div>
@@ -1681,11 +1681,11 @@ pip install numpy pandas matplotlib openpyxl</code></pre>
 <span class="code-line"><span class="token-string">    Generate Fuzzy Logical Relations from the fuzzified series.</span></span>
 <span class="code-line"><span class="token-string">    </span></span>
 <span class="code-line"><span class="token-string">    For order k, each FLR has the form:</span></span>
-<span class="code-line"><span class="token-string">        (F(t-k), F(t-k+1), ..., F(t-1)) → F(t)</span></span>
+<span class="code-line"><span class="token-string">        (F(t-k), F(t-k+1), ..., F(t-1)) -> F(t)</span></span>
 <span class="code-line"><span class="token-string">    </span></span>
-<span class="code-line"><span class="token-string">    First-Order (k=1): A3 → A4</span></span>
-<span class="code-line"><span class="token-string">    Second-Order (k=2): (A2, A3) → A4</span></span>
-<span class="code-line"><span class="token-string">    Third-Order (k=3): (A1, A2, A3) → A4</span></span>
+<span class="code-line"><span class="token-string">    First-Order (k=1): A3 -> A4</span></span>
+<span class="code-line"><span class="token-string">    Second-Order (k=2): (A2, A3) -> A4</span></span>
+<span class="code-line"><span class="token-string">    Third-Order (k=3): (A1, A2, A3) -> A4</span></span>
 <span class="code-line"><span class="token-string">    """</span></span>
 <span class="code-line">    <span class="token-self">self</span>.flrs = []</span>
 <span class="code-line">    n = <span class="token-builtin">len</span>(<span class="token-self">self</span>.fuzzified_series)</span>
@@ -1719,13 +1719,13 @@ pip install numpy pandas matplotlib openpyxl</code></pre>
 <span class="code-line"><span class="token-string">    Generate Fuzzy Logical Relation Groups by grouping FLRs.</span></span>
 <span class="code-line"><span class="token-string">    </span></span>
 <span class="code-line"><span class="token-string">    Example:</span></span>
-<span class="code-line"><span class="token-string">        FLRs: A3→A4, A3→A3, A3→A4, A3→A5</span></span>
-<span class="code-line"><span class="token-string">        FLRG: A3 → {A3, A4, A5}</span></span>
+<span class="code-line"><span class="token-string">        FLRs: A3->A4, A3->A3, A3->A4, A3->A5</span></span>
+<span class="code-line"><span class="token-string">        FLRG: A3 -> {A3, A4, A5}</span></span>
 <span class="code-line"><span class="token-string">    </span></span>
 <span class="code-line"><span class="token-string">    The set of consequents represents all possible next states</span></span>
 <span class="code-line"><span class="token-string">    that have been observed following the antecedent pattern.</span></span>
 <span class="code-line"><span class="token-string">    """</span></span>
-<span class="code-line">    <span class="token-self">self</span>.flrgs = {}  <span class="token-comment"># Dictionary: antecedent → FLRG</span></span>
+<span class="code-line">    <span class="token-self">self</span>.flrgs = {}  <span class="token-comment"># Dictionary: antecedent -> FLRG</span></span>
 <span class="code-line">    </span>
 <span class="code-line">    <span class="token-keyword">for</span> flr <span class="token-keyword">in</span> <span class="token-self">self</span>.flrs:</span>
 <span class="code-line">        <span class="token-comment"># Check if we've seen this antecedent before</span></span>
@@ -1791,8 +1791,8 @@ pip install numpy pandas matplotlib openpyxl</code></pre>
 <span class="code-line"><span class="token-string">    </span></span>
 <span class="code-line"><span class="token-string">    An FLR captures a single temporal transition observed in the data.</span></span>
 <span class="code-line"><span class="token-string">    For example, if the series goes [A2, A3, A4], we create FLRs:</span></span>
-<span class="code-line"><span class="token-string">        - Order 1: A2→A3, A3→A4</span></span>
-<span class="code-line"><span class="token-string">        - Order 2: (A2,A3)→A4</span></span>
+<span class="code-line"><span class="token-string">        - Order 1: A2->A3, A3->A4</span></span>
+<span class="code-line"><span class="token-string">        - Order 2: (A2,A3)->A4</span></span>
 <span class="code-line"><span class="token-string">    """</span></span>
 <span class="code-line">    antecedent: <span class="token-class">Tuple</span>[<span class="token-builtin">str</span>, ...]  <span class="token-comment"># Previous state(s)</span></span>
 <span class="code-line">    consequent: <span class="token-builtin">str</span>              <span class="token-comment"># Next state</span></span>
@@ -1800,12 +1800,12 @@ pip install numpy pandas matplotlib openpyxl</code></pre>
 <span class="code-line">    <span class="token-keyword">def</span> <span class="token-function">__str__</span>(<span class="token-self">self</span>) -> <span class="token-builtin">str</span>:</span>
 <span class="code-line">        <span class="token-string">"""Human-readable representation."""</span></span>
 <span class="code-line">        <span class="token-keyword">if</span> <span class="token-builtin">len</span>(<span class="token-self">self</span>.antecedent) == <span class="token-number">1</span>:</span>
-<span class="code-line">            <span class="token-comment"># First-order: A3 → A4</span></span>
-<span class="code-line">            <span class="token-keyword">return</span> <span class="token-string">f"</span>{<span class="token-self">self</span>.antecedent[<span class="token-number">0</span>]}<span class="token-string"> → </span>{<span class="token-self">self</span>.consequent}<span class="token-string">"</span></span>
+<span class="code-line">            <span class="token-comment"># First-order: A3 -> A4</span></span>
+<span class="code-line">            <span class="token-keyword">return</span> <span class="token-string">f"</span>{<span class="token-self">self</span>.antecedent[<span class="token-number">0</span>]}<span class="token-string"> -> </span>{<span class="token-self">self</span>.consequent}<span class="token-string">"</span></span>
 <span class="code-line">        <span class="token-keyword">else</span>:</span>
-<span class="code-line">            <span class="token-comment"># High-order: (A2, A3) → A4</span></span>
+<span class="code-line">            <span class="token-comment"># High-order: (A2, A3) -> A4</span></span>
 <span class="code-line">            ant_str = <span class="token-string">"("</span> + <span class="token-string">", "</span>.join(<span class="token-self">self</span>.antecedent) + <span class="token-string">")"</span></span>
-<span class="code-line">            <span class="token-keyword">return</span> <span class="token-string">f"</span>{ant_str}<span class="token-string"> → </span>{<span class="token-self">self</span>.consequent}<span class="token-string">"</span></span></code></pre>
+<span class="code-line">            <span class="token-keyword">return</span> <span class="token-string">f"</span>{ant_str}<span class="token-string"> -> </span>{<span class="token-self">self</span>.consequent}<span class="token-string">"</span></span></code></pre>
                     </div>
 
                     <h3>Fuzzy Logical Relation Group (FLRG)</h3>
@@ -1852,12 +1852,12 @@ pip install numpy pandas matplotlib openpyxl</code></pre>
 <span class="code-line"><span class="token-string">    Groups all FLRs with the same antecedent.</span></span>
 <span class="code-line"><span class="token-string">    </span></span>
 <span class="code-line"><span class="token-string">    If we observe:</span></span>
-<span class="code-line"><span class="token-string">        A3 → A4</span></span>
-<span class="code-line"><span class="token-string">        A3 → A3</span></span>
-<span class="code-line"><span class="token-string">        A3 → A4</span></span>
-<span class="code-line"><span class="token-string">        A3 → A5</span></span>
+<span class="code-line"><span class="token-string">        A3 -> A4</span></span>
+<span class="code-line"><span class="token-string">        A3 -> A3</span></span>
+<span class="code-line"><span class="token-string">        A3 -> A4</span></span>
+<span class="code-line"><span class="token-string">        A3 -> A5</span></span>
 <span class="code-line"><span class="token-string">    </span></span>
-<span class="code-line"><span class="token-string">    The FLRG becomes: A3 → A3, A4, A5</span></span>
+<span class="code-line"><span class="token-string">    The FLRG becomes: A3 -> A3, A4, A5</span></span>
 <span class="code-line"><span class="token-string">    (Note: A4 appears once despite being observed twice)</span></span>
 <span class="code-line"><span class="token-string">    """</span></span>
 <span class="code-line">    antecedent: <span class="token-class">Tuple</span>[<span class="token-builtin">str</span>, ...]</span>
@@ -1940,7 +1940,7 @@ pip install numpy pandas matplotlib openpyxl</code></pre>
                     <h3>Example Calculation</h3>
                     <div class="alert alert-success">
                         <div class="alert-title">📝 Worked Example</div>
-                        <p><strong>Given:</strong> FLRG is A4 → A3, A4, A5</p>
+                        <p><strong>Given:</strong> FLRG is A4 -> A3, A4, A5</p>
                         <p><strong>Centers:</strong> A3 = 20, A4 = 26, A5 = 32</p>
                         <p><strong>Calculation:</strong> (20 + 26 + 32) / 3 = 26</p>
                         <p><strong>Prediction:</strong> 26</p>
@@ -2019,9 +2019,9 @@ pip install numpy pandas matplotlib openpyxl</code></pre>
 <span class="code-line"><span class="token-string">    </span></span>
 <span class="code-line"><span class="token-string">    Example:</span></span>
 <span class="code-line"><span class="token-string">        Target: (A3, A5)</span></span>
-<span class="code-line"><span class="token-string">        FLRG 1: (A3, A4) → distance = |3-3| + |5-4| = 1</span></span>
-<span class="code-line"><span class="token-string">        FLRG 2: (A2, A5) → distance = |3-2| + |5-5| = 1</span></span>
-<span class="code-line"><span class="token-string">        FLRG 3: (A1, A2) → distance = |3-1| + |5-2| = 5</span></span>
+<span class="code-line"><span class="token-string">        FLRG 1: (A3, A4) -> distance = |3-3| + |5-4| = 1</span></span>
+<span class="code-line"><span class="token-string">        FLRG 2: (A2, A5) -> distance = |3-2| + |5-5| = 1</span></span>
+<span class="code-line"><span class="token-string">        FLRG 3: (A1, A2) -> distance = |3-1| + |5-2| = 5</span></span>
 <span class="code-line"><span class="token-string">    </span></span>
 <span class="code-line"><span class="token-string">    Why Manhattan distance?</span></span>
 <span class="code-line"><span class="token-string">    - Simple and fast to compute</span></span>
@@ -2084,22 +2084,22 @@ pip install numpy pandas matplotlib openpyxl</code></pre>
                                 <ul class="param-list">
                                     <li class="param-item">
                                         <span class="param-name">rmse()</span>
-                                        <span class="param-type">→ float</span>
+                                        <span class="param-type">-> float</span>
                                         <span class="param-desc">Root Mean Square Error</span>
                                     </li>
                                     <li class="param-item">
                                         <span class="param-name">mae()</span>
-                                        <span class="param-type">→ float</span>
+                                        <span class="param-type">-> float</span>
                                         <span class="param-desc">Mean Absolute Error</span>
                                     </li>
                                     <li class="param-item">
                                         <span class="param-name">mape()</span>
-                                        <span class="param-type">→ float</span>
+                                        <span class="param-type">-> float</span>
                                         <span class="param-desc">Mean Absolute Percentage Error</span>
                                     </li>
                                     <li class="param-item">
                                         <span class="param-name">all_metrics()</span>
-                                        <span class="param-type">→ Dict</span>
+                                        <span class="param-type">-> Dict</span>
                                         <span class="param-desc">Calculate all metrics at once</span>
                                     </li>
                                 </ul>

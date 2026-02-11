@@ -5,7 +5,6 @@ from collections import defaultdict
 
 
 class MembershipFunctionType(Enum):
-    """Enumeration of supported membership function types."""
     TRIANGULAR = "triangular"
     TRAPEZOIDAL = "trapezoidal"
     GAUSSIAN = "gaussian"
@@ -13,16 +12,6 @@ class MembershipFunctionType(Enum):
 
 
 class FuzzySet:
-    """
-    Represents a single fuzzy set with its membership function.
-
-    Attributes:
-        name: Linguistic label for the fuzzy set (e.g., 'A1', 'Low', 'Medium')
-        mf_type: Type of membership function
-        parameters: Parameters defining the membership function shape
-        center: The center/midpoint value of the fuzzy set for defuzzification
-    """
-
     def __init__(self, name: str, mf_type: MembershipFunctionType, parameters: Dict[str, float], center: float):
         self.name = name
         self.mf_type = mf_type
@@ -30,15 +19,6 @@ class FuzzySet:
         self.center = center
 
     def membership(self, x: float) -> float:
-        """
-        Calculate the membership degree of a crisp value x in this fuzzy set.
-
-        Args:
-            x: The crisp input value
-
-        Returns:
-            Membership degree in range [0, 1]
-        """
         if self.mf_type == MembershipFunctionType.TRIANGULAR:
             return self._triangular_membership(x)
         elif self.mf_type == MembershipFunctionType.TRAPEZOIDAL:
@@ -53,41 +33,35 @@ class FuzzySet:
 
     def _triangular_membership(self, x: float) -> float:
         """
-        Triangular membership function.
-        Parameters: a (left), b (peak), c (right)
-
               1 |     /\\
                 |    /  \\
                 |   /    \\
               0 |__/______\\__
-                  a  b    c
+                  a   b   c
         """
-        a = self.parameters['a']  # Left point
-        b = self.parameters['b']  # Peak point
-        c = self.parameters['c']  # Right point
+        a = self.parameters['a']
+        b = self.parameters['b']
+        c = self.parameters['c']
 
         if x <= a or x >= c:
             return 0.0
         elif a < x <= b:
             return (x - a) / (b - a) if b != a else 1.0
-        else:  # b < x < c
+        else:
             return (c - x) / (c - b) if c != b else 1.0
 
     def _trapezoidal_membership(self, x: float) -> float:
         """
-        Trapezoidal membership function.
-        Parameters: a (left), b (left shoulder), c (right shoulder), d (right)
-
               1 |    ____
                 |   /    \\
                 |  /      \\
               0 |_/________\\__
-                 a b      c d
+                 a   b   c  d
         """
-        a = self.parameters['a']  # Left point
-        b = self.parameters['b']  # Left shoulder
-        c = self.parameters['c']  # Right shoulder
-        d = self.parameters['d']  # Right point
+        a = self.parameters['a']
+        b = self.parameters['b']
+        c = self.parameters['c']
+        d = self.parameters['d']
 
         if x <= a or x >= d:
             return 0.0
@@ -95,16 +69,10 @@ class FuzzySet:
             return (x - a) / (b - a) if b != a else 1.0
         elif b <= x <= c:
             return 1.0
-        else:  # c < x < d
+        else:
             return (d - x) / (d - c) if d != c else 1.0
 
     def _gaussian_membership(self, x: float) -> float:
-        """
-        Gaussian membership function.
-        Parameters: c (center), sigma (standard deviation)
-
-        μ(x) = exp(-((x - c)^2) / (2 * sigma^2))
-        """
         c = self.parameters['c']
         sigma = self.parameters['sigma']
 
@@ -112,9 +80,7 @@ class FuzzySet:
 
     def _bell_membership(self, x: float) -> float:
         """
-        Generalized bell-shaped membership function.
-        Parameters: a (width), b (slope), c (center)
-
+        a (width), b (slope), c (center)
         μ(x) = 1 / (1 + |((x - c) / a)|^(2b))
         """
         a = self.parameters['a']  # Width
@@ -145,13 +111,6 @@ class UniverseOfDiscourse:
 
 
 class FuzzySetPartitioner:
-    """
-    Creates fuzzy sets by partitioning the universe of discourse.
-
-    This class implements various strategies for creating fuzzy set partitions
-    with different membership function types.
-    """
-
     def __init__(
         self,
         universe: UniverseOfDiscourse,
@@ -159,15 +118,6 @@ class FuzzySetPartitioner:
         mf_type: MembershipFunctionType = MembershipFunctionType.TRIANGULAR,
         prefix: str = "A"
     ):
-        """
-        Initialize the partitioner.
-
-        Args:
-            universe: The universe of discourse to partition
-            num_partitions: Number of fuzzy sets to create
-            mf_type: Type of membership function to use
-            prefix: Prefix for fuzzy set names (e.g., 'A' creates A1, A2, ...)
-        """
         self.universe = universe
         self.num_partitions = num_partitions
         self.mf_type = mf_type
@@ -175,12 +125,6 @@ class FuzzySetPartitioner:
         self.fuzzy_sets: List[FuzzySet] = []
 
     def create_partitions(self) -> List[FuzzySet]:
-        """
-        Create fuzzy set partitions based on the specified membership function type.
-
-        Returns:
-            List of FuzzySet objects covering the universe of discourse
-        """
         if self.mf_type == MembershipFunctionType.TRIANGULAR:
             self.fuzzy_sets = self._create_triangular_partitions()
         elif self.mf_type == MembershipFunctionType.TRAPEZOIDAL:
@@ -196,29 +140,23 @@ class FuzzySetPartitioner:
         return self.fuzzy_sets
 
     def _create_triangular_partitions(self) -> List[FuzzySet]:
-        """
-        Create triangular fuzzy set partitions with 50% overlap.
-
-        The partitions are designed so that adjacent fuzzy sets overlap at the
-        0.5 membership level, ensuring complete coverage of the universe.
-        """
         fuzzy_sets = []
         n = self.num_partitions
         lower = self.universe.lower_bound()
         upper = self.universe.upper_bound()
 
-        # Calculate the step size (distance between centers)
-        step = (upper - lower) / (n - 1) if n > 1 else (upper - lower)
+        width = (upper - lower) / n if n > 0 else (upper - lower)
 
         for i in range(n):
-            # Center of this fuzzy set
-            center = lower + i * step
+            cl = lower + i * width
+            cr = cl + width
 
-            # Left and right points of the triangle
-            # For first set, left point is at the lower bound
-            # For last set, right point is at the upper bound
-            left = lower + (i - 1) * step if i > 0 else lower - step
-            right = lower + (i + 1) * step if i < n - 1 else upper + step
+            center = (cl + cr) / 2
+
+            # Expand into neighbors so triangles overlap smoothly
+            # (crossing near μ = 0.5 instead of touching at one point)
+            left = cl - width / 2
+            right = cr + width / 2
 
             name = f"{self.prefix}{i + 1}"
             params = {'a': left, 'b': center, 'c': right}
@@ -233,20 +171,55 @@ class FuzzySetPartitioner:
         return fuzzy_sets
 
     def _create_trapezoidal_partitions(self) -> List[FuzzySet]:
+        """ The first and last sets are half-trapezoids (extending to infinity),
+            while middle sets are full trapezoids with overlapping regions.
         """
-        Create trapezoidal fuzzy set partitions.
 
-        The first and last sets are half-trapezoids (extending to infinity),
-        while middle sets are full trapezoids with overlapping regions.
+        """
+            1) Split the universe into n equal base segments:
+                width = (U - L) / n
+
+            Each fuzzy set i corresponds to one base segment:
+                cl = L + i * width        # left edge of the segment
+                cr = cl + width           # right edge of the segment
+                center = (cl + cr) / 2    # geometric center of the fuzzy set
+
+
+            2) Add overlap so neighboring sets blend smoothly.
+            Without overlap, trapezoids would touch at one point and create
+            sharp jumps. We therefore *expand* each trapezoid into its neighbors
+            by 25% of the segment width:
+
+                overlap = 0.25 * width
+
+            Interpretation:
+                subtract overlap -> extend into the previous set
+                add overlap      -> extend into the next set
+
+
+            3) Build a trapezoid (a, b, c, d) for each segment:
+
+                a -> b : rising edge  (membership grows from 0 to 1)
+                b -> c : flat top     (membership = 1)
+                c -> d : falling edge (membership falls from 1 to 0)
+
+
+            Why the + and −:
+            ----------------
+            We do NOT want the trapezoid to start and end exactly at cl and cr.
+            Instead, we “push” its sides outward so adjacent sets overlap.
+
+                a = cl - overlap   # start rising BEFORE the core segment
+                b = cl + overlap   # reach full membership slightly INSIDE it
+                c = cr - overlap   # start falling BEFORE leaving the core
+                d = cr + overlap   # finish falling AFTER leaving the core
         """
         fuzzy_sets = []
         n = self.num_partitions
         lower = self.universe.lower_bound()
         upper = self.universe.upper_bound()
 
-        # Calculate width of each partition
         total_width = upper - lower
-        # Each trapezoid has a flat top portion and sloped sides
         partition_width = total_width / n
         overlap = partition_width * 0.25  # 25% overlap on each side
 
@@ -254,21 +227,20 @@ class FuzzySetPartitioner:
             center_left = lower + i * partition_width
             center_right = center_left + partition_width
             center = (center_left + center_right) / 2
-
+            # right-open trapezoid (Left Shoulder)
             if i == 0:
-                # First partition: left-open trapezoid
-                a = lower - partition_width  # Extend beyond lower bound
+                a = lower - partition_width
                 b = lower
                 c = center_right - overlap
                 d = center_right + overlap
+            # right-open trapezoid (Right Shoulder)
             elif i == n - 1:
-                # Last partition: right-open trapezoid
                 a = center_left - overlap
                 b = center_left + overlap
                 c = upper
-                d = upper + partition_width  # Extend beyond upper bound
+                d = upper + partition_width
+            # Middle partitions: full trapezoid
             else:
-                # Middle partitions: full trapezoid
                 a = center_left - overlap
                 b = center_left + overlap
                 c = center_right - overlap
@@ -288,27 +260,47 @@ class FuzzySetPartitioner:
 
     def _create_gaussian_partitions(self) -> List[FuzzySet]:
         """
-        Create Gaussian fuzzy set partitions.
-
-        Centers are evenly spaced, and sigma is chosen so that adjacent
-        Gaussians cross at approximately 0.5 membership.
+        Sigma is chosen so that neighboring Gaussians intersect
+        at μ = 0.5 (half-membership).
         """
         fuzzy_sets = []
         n = self.num_partitions
         lower = self.universe.lower_bound()
         upper = self.universe.upper_bound()
 
-        # Calculate step between centers
-        step = (upper - lower) / (n - 1) if n > 1 else (upper - lower)
+        width = (upper - lower) / n if n > 0 else (upper - lower)
 
-        # Sigma is chosen so that at distance step/2, membership is ~0.5
+        step = width
+
+        # Set the mean condition to 0.5 at x = step/2
         # exp(-(step/2)^2 / (2*sigma^2)) = 0.5
-        # sigma = step / (2 * sqrt(2 * ln(2)))
+
+        # Step 1: Rearranging the equation
+        # Taking the natural logarithm of both sides
+        # - (step/2)^2 / (2*sigma^2) = ln(0.5)
+
+        # Step 2: ln(0.5) can be rewritten using properties of logarithms
+        # - (step/2)^2 / (2*sigma^2) = -ln(2)
+
+        # Step 3: Remove negative signs
+        # (step/2)^2 / (2*sigma^2) = ln(2)
+
+        # Step 4: Multiplying both sides by 2*sigma^2
+        # (step/2)^2 = 2*sigma^2 * ln(2)
+
+        # Step 5: Isolating sigma^2
+        # sigma^2 = (step^2 / 4) / (2*ln(2))
+
+        # Step 6: Taking the square root to solve for sigma
+        # sigma = (step / 2) / sqrt(2*ln(2))
         sigma = step / (2 * np.sqrt(2 * np.log(2))
-                        ) if n > 1 else (upper - lower) / 4
+                        ) if n > 0 else (upper - lower) / 4
 
         for i in range(n):
-            center = lower + i * step
+            cl = lower + i * width
+            cr = cl + width
+            center = (cl + cr) / 2
+
             name = f"{self.prefix}{i + 1}"
             params = {'c': center, 'sigma': sigma}
 
@@ -323,26 +315,40 @@ class FuzzySetPartitioner:
 
     def _create_bell_partitions(self) -> List[FuzzySet]:
         """
-        Create generalized bell-shaped fuzzy set partitions.
+            All bells are expanded so that neighboring bells intersect at
+            μ = 0.5, ensuring smooth fuzzy transitions.
 
-        The bell function provides more control over shape than Gaussian
-        through the b parameter (slope steepness).
+            The generalized bell MF is:
+                μ(x) = 1 / (1 + |(x - c) / a|^(2b))
+
+            where:
+                c = center of the bell
+                a = half-width control (where μ ≈ 0.5)
+                b = slope/steepness (higher = sharper sides)
         """
         fuzzy_sets = []
         n = self.num_partitions
         lower = self.universe.lower_bound()
         upper = self.universe.upper_bound()
 
-        # Calculate step between centers
-        step = (upper - lower) / (n - 1) if n > 1 else (upper - lower)
+        width = (upper - lower) / n if n > 0 else (upper - lower)
 
-        # Width parameter (a) controls where membership drops
-        # Slope parameter (b) controls steepness, higher = steeper
-        a = step / 2 if n > 1 else (upper - lower) / 2
-        b = 2.0  # Moderate steepness
+        step = width
+
+        # Choose a so that μ(step/2) = 0.5:
+        #   1 / (1 + |(step/2)/a|^(2b)) = 0.5
+        # -> |(step/2)/a|^(2b) = 1
+        # -> (step/2)/a = 1
+        # -> a = step/2
+        a = step / 2 if n > 0 else (upper - lower) / 2
+
+        b = 2.0
 
         for i in range(n):
-            center = lower + i * step
+            cl = lower + i * width
+            cr = cl + width
+            center = (cl + cr) / 2
+
             name = f"{self.prefix}{i + 1}"
             params = {'a': a, 'b': b, 'c': center}
 
@@ -357,16 +363,9 @@ class FuzzySetPartitioner:
 
 
 class FuzzyLogicalRelation:
-    """
-    Represents a single Fuzzy Logical Relation (FLR).
-
-    For first-order: A_i -> A_j (single antecedent)
-    For high-order: (A_i, A_j, ..., A_k) -> A_l (multiple antecedents)
-    """
-
     def __init__(self, antecedent: Tuple[str, ...], consequent: str):
-        self.antecedent = antecedent  # Tuple of fuzzy set names
-        self.consequent = consequent  # Single fuzzy set name
+        self.antecedent = antecedent
+        self.consequent = consequent
 
     def __hash__(self):
         return hash((self.antecedent, self.consequent))
@@ -384,14 +383,6 @@ class FuzzyLogicalRelation:
 
 
 class FuzzyLogicalRelationGroup:
-    """
-    Represents a Fuzzy Logical Relation Group (FLRG).
-
-    Groups all consequents that share the same antecedent pattern.
-    For example: A1 -> A2, A3, A4 (first-order)
-    Or: (A1, A2) -> A3, A4 (high-order)
-    """
-
     def __init__(self, antecedent: Tuple[str, ...], consequents: List[str] = None):
         self.antecedent = antecedent
         self.consequents = consequents if consequents is not None else []
@@ -408,16 +399,13 @@ class FuzzyLogicalRelationGroup:
             ant_str = f"({', '.join(self.antecedent)})"
 
         if not self.consequents:
-            return f"{ant_str} -> ∅"
+            return f"{ant_str} -> {{}}"
         return f"{ant_str} -> {', '.join(self.consequents)}"
 
 
 class FuzzyTimeSeries:
     """
     Main class for Fuzzy Time Series forecasting.
-
-    Implements both First-Order FTS (FOFTS) and High-Order FTS (HOFTS)
-    algorithms from scratch.
     """
 
     def __init__(
@@ -453,34 +441,20 @@ class FuzzyTimeSeries:
     def fit(self, data: np.ndarray) -> 'FuzzyTimeSeries':
         """
         Fit the FTS model to training data.
-
-        Steps:
-        1. Define universe of discourse
-        2. Create fuzzy set partitions
-        3. Fuzzify the time series
-        4. Generate FLRs and FLRGs
-
-        Args:
-            data: 1D numpy array of time series values
-
-        Returns:
-            self for method chaining
+            Steps:
+                1. Define universe of discourse
+                2. Create fuzzy set partitions
+                3. Fuzzify the time series
+                4. Generate FLRs and FLRGs
         """
+        # Return a copy of the array collapsed into one dimension.
+        # Read More: https://numpy.org/devdocs/reference/generated/numpy.ndarray.flatten.html
         self.training_data = np.array(data).flatten()
 
-        # Step 1: Define universe of discourse
         self._define_universe()
-
-        # Step 2: Create fuzzy set partitions
         self._create_fuzzy_sets()
-
-        # Step 3: Fuzzify the time series
         self._fuzzify_series()
-
-        # Step 4: Generate FLRs
         self._generate_flrs()
-
-        # Step 5: Generate FLRGs
         self._generate_flrgs()
 
         return self
@@ -500,7 +474,6 @@ class FuzzyTimeSeries:
         )
 
     def _create_fuzzy_sets(self):
-        """Create fuzzy set partitions using the configured partitioner."""
         partitioner = FuzzySetPartitioner(
             universe=self.universe,
             num_partitions=self.num_partitions,
@@ -509,19 +482,16 @@ class FuzzyTimeSeries:
 
         self.fuzzy_sets = partitioner.create_partitions()
 
-        # Create mapping from name to fuzzy set for quick lookup
+        # Create dict for quick lookup
         self.fuzzy_set_map = {fs.name: fs for fs in self.fuzzy_sets}
 
     def _fuzzify_value(self, value: float) -> str:
         """
-        Fuzzify a single crisp value by finding the fuzzy set with maximum membership.
-
-        Args:
-            value: Crisp input value
-
-        Returns:
-            Name of the fuzzy set with highest membership
-        """
+            1. Start with the first category as "best guess"
+            2. Check each category to see how well the value fits
+            3. Keep the category with the highest "fit score"
+            4. Return that category name
+            """
         max_membership = -1
         best_set = self.fuzzy_sets[0].name
 
@@ -534,24 +504,19 @@ class FuzzyTimeSeries:
         return best_set
 
     def _fuzzify_series(self):
-        """Fuzzify all values in the training series."""
+        # Converts every number in your training data to its fuzzy category.
+        # If training_data = [3.2, 7.5, 9.1]
+        # Result might be: ["Low", "Medium", "High"]
         self.fuzzified_series = [
             self._fuzzify_value(value) for value in self.training_data
         ]
 
     def _generate_flrs(self):
-        """
-        Generate Fuzzy Logical Relations based on the model order.
-
-        For order k, each FLR is: (F(t-k), F(t-k+1), ..., F(t-1)) -> F(t)
-        """
         self.flrs = []
         n = len(self.fuzzified_series)
 
         for t in range(self.order, n):
-            # Get antecedent (previous k fuzzified values)
             antecedent = tuple(self.fuzzified_series[t - self.order:t])
-            # Get consequent (current fuzzified value)
             consequent = self.fuzzified_series[t]
 
             flr = FuzzyLogicalRelation(
@@ -559,9 +524,6 @@ class FuzzyTimeSeries:
             self.flrs.append(flr)
 
     def _generate_flrgs(self):
-        """
-        Generate Fuzzy Logical Relation Groups by grouping FLRs with same antecedent.
-        """
         self.flrgs = {}
 
         for flr in self.flrs:
@@ -572,80 +534,41 @@ class FuzzyTimeSeries:
             self.flrgs[flr.antecedent].add_consequent(flr.consequent)
 
     def _defuzzify(self, fuzzy_set_names: List[str]) -> float:
-        """
-        Defuzzify by computing the average center of the consequent fuzzy sets.
-
-        This implements the centroid defuzzification method.
-
-        Args:
-            fuzzy_set_names: List of fuzzy set names from the FLRG consequents
-
-        Returns:
-            Crisp output value
-        """
         if not fuzzy_set_names:
-            # If no consequents, return middle of universe
+            # If no consequents -> return middle of universe
             return (self.universe.lower_bound() + self.universe.upper_bound()) / 2
 
         centers = [self.fuzzy_set_map[name].center for name in fuzzy_set_names]
         return np.mean(centers)
 
     def predict_next(self, history: List[float]) -> float:
-        """
-        Predict the next value given a history of recent values.
-
-        Args:
-            history: List of recent values (length should be >= order)
-
-        Returns:
-            Predicted next value
-        """
         if len(history) < self.order:
-            raise ValueError(
-                f"History length ({len(history)}) must be >= order ({self.order})")
+            return
 
-        # Take only the last 'order' values
         recent = history[-self.order:]
-
-        # Fuzzify the recent values
         fuzzified = tuple(self._fuzzify_value(v) for v in recent)
 
-        # Look up the FLRG
         if fuzzified in self.flrgs:
             consequents = self.flrgs[fuzzified].consequents
         else:
-            # No matching rule - use nearest neighbor approach
             consequents = self._find_nearest_flrg(fuzzified)
 
-        # Defuzzify
         return self._defuzzify(consequents)
 
     def _find_nearest_flrg(self, target: Tuple[str, ...]) -> List[str]:
-        """
-        Find the nearest FLRG when exact match is not found.
-
-        Uses a simple similarity measure based on fuzzy set indices.
-
-        Args:
-            target: The target antecedent tuple
-
-        Returns:
-            List of consequent fuzzy set names from the nearest FLRG
-        """
-        if not self.flrgs:
-            return [self.fuzzy_sets[len(self.fuzzy_sets) // 2].name]
-
-        # Convert fuzzy set names to indices for distance calculation
+        """Find the nearest FLRG when exact match is not found."""
         def get_index(name: str) -> int:
             for i, fs in enumerate(self.fuzzy_sets):
                 if fs.name == name:
                     return i
             return 0
+        # If no rules exist at all, return the middle fuzzy set
+        if not self.flrgs:
+            return [self.fuzzy_sets[len(self.fuzzy_sets) // 2].name]
 
-        target_indices = [get_index(name) for name in target]
-
-        min_distance = float('inf')
         best_flrg = None
+        min_distance = float('inf')
+        target_indices = [get_index(name) for name in target]
 
         for antecedent, flrg in self.flrgs.items():
             antecedent_indices = [get_index(name) for name in antecedent]
@@ -661,19 +584,11 @@ class FuzzyTimeSeries:
         return best_flrg.consequents if best_flrg else [self.fuzzy_sets[0].name]
 
     def predict(self, data: np.ndarray) -> np.ndarray:
-        """
-        Generate predictions for a series of data points.
-
-        Args:
-            data: Input time series data
-
-        Returns:
-            Array of predictions (first 'order' values cannot be predicted)
-        """
+        # Return a copy of the array collapsed into one dimension.
+        # Read More: https://numpy.org/devdocs/reference/generated/numpy.ndarray.flatten.html
         data = np.array(data).flatten()
         predictions = np.full(len(data), np.nan)
 
-        # Start predicting from index 'order'
         for t in range(self.order, len(data)):
             history = list(data[:t])
             predictions[t] = self.predict_next(history)
@@ -681,16 +596,7 @@ class FuzzyTimeSeries:
         return predictions
 
     def forecast(self, steps: int, initial_history: List[float]) -> List[float]:
-        """
-        Forecast multiple steps into the future.
-
-        Args:
-            steps: Number of steps to forecast
-            initial_history: Historical data to start from
-
-        Returns:
-            List of forecasted values
-        """
+        """This function predicts multiple steps into the unknown future by using its own predictions as input."""
         history = list(initial_history)
         forecasts = []
 
@@ -702,15 +608,14 @@ class FuzzyTimeSeries:
         return forecasts
 
     def get_flrs_as_strings(self) -> List[str]:
-        """Get all FLRs as human-readable strings."""
+        """Human-readable FLRs."""
         return [str(flr) for flr in self.flrs]
 
     def get_flrgs_as_strings(self) -> List[str]:
-        """Get all FLRGs as human-readable strings."""
+        """Human-readable FLRGs."""
         return [str(flrg) for flrg in self.flrgs.values()]
 
     def get_fuzzy_sets_info(self) -> List[Dict]:
-        """Get information about all fuzzy sets."""
         return [
             {
                 'name': fs.name,
@@ -723,17 +628,12 @@ class FuzzyTimeSeries:
 
 
 class FTSMetrics:
-    """
-    Calculates performance metrics for FTS models.
-    """
-
     def rmse(self, actual: np.ndarray, predicted: np.ndarray) -> float:
         """
-        Calculate Root Mean Square Error.
+        Root Mean Square Error:
 
         RMSE = sqrt(mean((actual - predicted)^2))
         """
-        # Remove NaN values
         mask = ~np.isnan(predicted) & ~np.isnan(actual)
         actual_clean = actual[mask]
         predicted_clean = predicted[mask]
@@ -745,7 +645,7 @@ class FTSMetrics:
 
     def mae(self, actual: np.ndarray, predicted: np.ndarray) -> float:
         """
-        Calculate Mean Absolute Error.
+        Mean Absolute Error:
 
         MAE = mean(|actual - predicted|)
         """
@@ -760,11 +660,11 @@ class FTSMetrics:
 
     def mape(self, actual: np.ndarray, predicted: np.ndarray) -> float:
         """
-        Calculate Mean Absolute Percentage Error.
+        Mean Absolute Percentage Error:
 
         MAPE = mean(|actual - predicted| / |actual|) * 100
 
-        Note: Excludes zero actual values to avoid division by zero.
+        ****Note*****: Excludes zero actual values to avoid division by zero.
         """
         mask = ~np.isnan(predicted) & ~np.isnan(actual) & (actual != 0)
         actual_clean = actual[mask]
@@ -776,7 +676,6 @@ class FTSMetrics:
         return np.mean(np.abs((actual_clean - predicted_clean) / actual_clean)) * 100
 
     def all_metrics(self, actual: np.ndarray, predicted: np.ndarray) -> Dict[str, float]:
-        """Calculate all metrics at once."""
         return {
             'RMSE': self.rmse(actual, predicted),
             'MAE': self.mae(actual, predicted),
