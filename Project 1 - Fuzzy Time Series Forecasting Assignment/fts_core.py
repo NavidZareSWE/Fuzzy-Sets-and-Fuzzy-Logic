@@ -1,15 +1,5 @@
-"""
-Fuzzy Time Series Core Module
-=============================
-This module implements the core algorithms for Fuzzy Time Series (FTS) forecasting,
-including both First-Order FTS (FOFTS) and High-Order FTS (HOFTS).
-
-All implementations are from scratch as per project requirements.
-"""
-
 import numpy as np
 from typing import List, Dict, Tuple, Optional, Union, Callable
-from dataclasses import dataclass, field
 from enum import Enum
 from collections import defaultdict
 
@@ -22,7 +12,6 @@ class MembershipFunctionType(Enum):
     BELL = "bell"
 
 
-@dataclass
 class FuzzySet:
     """
     Represents a single fuzzy set with its membership function.
@@ -33,10 +22,12 @@ class FuzzySet:
         parameters: Parameters defining the membership function shape
         center: The center/midpoint value of the fuzzy set for defuzzification
     """
-    name: str
-    mf_type: MembershipFunctionType
-    parameters: Dict[str, float]
-    center: float
+
+    def __init__(self, name: str, mf_type: MembershipFunctionType, parameters: Dict[str, float], center: float):
+        self.name = name
+        self.mf_type = mf_type
+        self.parameters = parameters
+        self.center = center
 
     def membership(self, x: float) -> float:
         """
@@ -136,34 +127,21 @@ class FuzzySet:
         return 1 / (1 + np.abs((x - c) / a) ** (2 * b))
 
 
-@dataclass
 class UniverseOfDiscourse:
-    """
-    Represents the universe of discourse for a fuzzy variable.
 
-    Attributes:
-        min_val: Minimum value of the universe
-        max_val: Maximum value of the universe
-        margin: Additional margin added to accommodate future values
-    """
-    min_val: float
-    max_val: float
-    margin: float = 0.0
+    def __init__(self, min_val: float, max_val: float, margin: float = 0.0):
+        self.min_val = min_val
+        self.max_val = max_val
+        self.margin = margin
 
-    @property
     def lower_bound(self) -> float:
-        """Get the effective lower bound including margin."""
         return self.min_val - self.margin
 
-    @property
     def upper_bound(self) -> float:
-        """Get the effective upper bound including margin."""
         return self.max_val + self.margin
 
-    @property
-    def range(self) -> float:
-        """Get the total range of the universe."""
-        return self.upper_bound - self.lower_bound
+    def get_range(self) -> float:
+        return self.upper_bound() - self.lower_bound()
 
 
 class FuzzySetPartitioner:
@@ -226,8 +204,8 @@ class FuzzySetPartitioner:
         """
         fuzzy_sets = []
         n = self.num_partitions
-        lower = self.universe.lower_bound
-        upper = self.universe.upper_bound
+        lower = self.universe.lower_bound()
+        upper = self.universe.upper_bound()
 
         # Calculate the step size (distance between centers)
         step = (upper - lower) / (n - 1) if n > 1 else (upper - lower)
@@ -263,8 +241,8 @@ class FuzzySetPartitioner:
         """
         fuzzy_sets = []
         n = self.num_partitions
-        lower = self.universe.lower_bound
-        upper = self.universe.upper_bound
+        lower = self.universe.lower_bound()
+        upper = self.universe.upper_bound()
 
         # Calculate width of each partition
         total_width = upper - lower
@@ -317,8 +295,8 @@ class FuzzySetPartitioner:
         """
         fuzzy_sets = []
         n = self.num_partitions
-        lower = self.universe.lower_bound
-        upper = self.universe.upper_bound
+        lower = self.universe.lower_bound()
+        upper = self.universe.upper_bound()
 
         # Calculate step between centers
         step = (upper - lower) / (n - 1) if n > 1 else (upper - lower)
@@ -352,8 +330,8 @@ class FuzzySetPartitioner:
         """
         fuzzy_sets = []
         n = self.num_partitions
-        lower = self.universe.lower_bound
-        upper = self.universe.upper_bound
+        lower = self.universe.lower_bound()
+        upper = self.universe.upper_bound()
 
         # Calculate step between centers
         step = (upper - lower) / (n - 1) if n > 1 else (upper - lower)
@@ -378,7 +356,6 @@ class FuzzySetPartitioner:
         return fuzzy_sets
 
 
-@dataclass
 class FuzzyLogicalRelation:
     """
     Represents a single Fuzzy Logical Relation (FLR).
@@ -386,8 +363,10 @@ class FuzzyLogicalRelation:
     For first-order: A_i -> A_j (single antecedent)
     For high-order: (A_i, A_j, ..., A_k) -> A_l (multiple antecedents)
     """
-    antecedent: Tuple[str, ...]  # Tuple of fuzzy set names
-    consequent: str  # Single fuzzy set name
+
+    def __init__(self, antecedent: Tuple[str, ...], consequent: str):
+        self.antecedent = antecedent  # Tuple of fuzzy set names
+        self.consequent = consequent  # Single fuzzy set name
 
     def __hash__(self):
         return hash((self.antecedent, self.consequent))
@@ -404,7 +383,6 @@ class FuzzyLogicalRelation:
             return f"({', '.join(self.antecedent)}) -> {self.consequent}"
 
 
-@dataclass
 class FuzzyLogicalRelationGroup:
     """
     Represents a Fuzzy Logical Relation Group (FLRG).
@@ -413,8 +391,10 @@ class FuzzyLogicalRelationGroup:
     For example: A1 -> A2, A3, A4 (first-order)
     Or: (A1, A2) -> A3, A4 (high-order)
     """
-    antecedent: Tuple[str, ...]
-    consequents: List[str] = field(default_factory=list)
+
+    def __init__(self, antecedent: Tuple[str, ...], consequents: List[str] = None):
+        self.antecedent = antecedent
+        self.consequents = consequents if consequents is not None else []
 
     def add_consequent(self, consequent: str):
         """Add a consequent to the group if not already present."""
@@ -506,7 +486,6 @@ class FuzzyTimeSeries:
         return self
 
     def _define_universe(self):
-        """Define the universe of discourse based on training data."""
         min_val = np.min(self.training_data)
         max_val = np.max(self.training_data)
 
@@ -606,7 +585,7 @@ class FuzzyTimeSeries:
         """
         if not fuzzy_set_names:
             # If no consequents, return middle of universe
-            return (self.universe.lower_bound + self.universe.upper_bound) / 2
+            return (self.universe.lower_bound() + self.universe.upper_bound()) / 2
 
         centers = [self.fuzzy_set_map[name].center for name in fuzzy_set_names]
         return np.mean(centers)
@@ -748,8 +727,7 @@ class FTSMetrics:
     Calculates performance metrics for FTS models.
     """
 
-    @staticmethod
-    def rmse(actual: np.ndarray, predicted: np.ndarray) -> float:
+    def rmse(self, actual: np.ndarray, predicted: np.ndarray) -> float:
         """
         Calculate Root Mean Square Error.
 
@@ -765,8 +743,7 @@ class FTSMetrics:
 
         return np.sqrt(np.mean((actual_clean - predicted_clean) ** 2))
 
-    @staticmethod
-    def mae(actual: np.ndarray, predicted: np.ndarray) -> float:
+    def mae(self, actual: np.ndarray, predicted: np.ndarray) -> float:
         """
         Calculate Mean Absolute Error.
 
@@ -781,8 +758,7 @@ class FTSMetrics:
 
         return np.mean(np.abs(actual_clean - predicted_clean))
 
-    @staticmethod
-    def mape(actual: np.ndarray, predicted: np.ndarray) -> float:
+    def mape(self, actual: np.ndarray, predicted: np.ndarray) -> float:
         """
         Calculate Mean Absolute Percentage Error.
 
@@ -799,11 +775,10 @@ class FTSMetrics:
 
         return np.mean(np.abs((actual_clean - predicted_clean) / actual_clean)) * 100
 
-    @staticmethod
-    def all_metrics(actual: np.ndarray, predicted: np.ndarray) -> Dict[str, float]:
+    def all_metrics(self, actual: np.ndarray, predicted: np.ndarray) -> Dict[str, float]:
         """Calculate all metrics at once."""
         return {
-            'RMSE': FTSMetrics.rmse(actual, predicted),
-            'MAE': FTSMetrics.mae(actual, predicted),
-            'MAPE': FTSMetrics.mape(actual, predicted)
+            'RMSE': self.rmse(actual, predicted),
+            'MAE': self.mae(actual, predicted),
+            'MAPE': self.mape(actual, predicted)
         }

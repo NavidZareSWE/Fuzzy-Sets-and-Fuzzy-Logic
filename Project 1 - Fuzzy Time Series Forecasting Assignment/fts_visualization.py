@@ -42,8 +42,8 @@ class FTSVisualizer:
 
         # Generate x values across the universe
         x_range = np.linspace(
-            universe.lower_bound - universe.range * 0.1,
-            universe.upper_bound + universe.range * 0.1,
+            universe.lower_bound() - universe.get_range() * 0.1,
+            universe.upper_bound() + universe.get_range() * 0.1,
             num_points
         )
 
@@ -61,9 +61,9 @@ class FTSVisualizer:
                 x=fs.center, color=colors[idx], linestyle='--', alpha=0.3)
 
         # Add universe bounds
-        ax.axvline(x=universe.lower_bound, color='gray',
+        ax.axvline(x=universe.lower_bound(), color='gray',
                    linestyle=':', alpha=0.5, label='Universe bounds')
-        ax.axvline(x=universe.upper_bound, color='gray',
+        ax.axvline(x=universe.upper_bound(), color='gray',
                    linestyle=':', alpha=0.5)
 
         ax.set_xlabel('Value', fontsize=12)

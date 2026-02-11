@@ -1,7 +1,6 @@
 import numpy as np
 import pandas as pd
 from typing import List, Dict, Tuple, Optional, Any
-from dataclasses import dataclass, field
 from itertools import product
 import json
 import os
@@ -13,13 +12,14 @@ from fts_core import (
 from fts_visualization import FTSVisualizer
 
 
-@dataclass
 class ExperimentConfig:
     """Configuration for a single experiment."""
-    order: int
-    num_partitions: int
-    mf_type: MembershipFunctionType
-    margin_percent: float = 0.1
+
+    def __init__(self, order: int, num_partitions: int, mf_type: MembershipFunctionType, margin_percent: float = 0.1):
+        self.order = order
+        self.num_partitions = num_partitions
+        self.mf_type = mf_type
+        self.margin_percent = margin_percent
 
     def to_dict(self) -> Dict:
         return {
@@ -29,9 +29,8 @@ class ExperimentConfig:
             'margin_percent': self.margin_percent
         }
 
-    @classmethod
-    def from_dict(cls, d: Dict) -> 'ExperimentConfig':
-        return cls(
+    def from_dict(self, d: Dict) -> 'ExperimentConfig':
+        return ExperimentConfig(
             order=d['order'],
             num_partitions=d['partitions'],
             mf_type=MembershipFunctionType(d['mf_type']),
@@ -39,16 +38,19 @@ class ExperimentConfig:
         )
 
 
-@dataclass
 class ExperimentResult:
     """Results from a single experiment run."""
-    config: ExperimentConfig
-    train_metrics: Dict[str, float]
-    test_metrics: Dict[str, float]
-    train_predictions: np.ndarray
-    test_predictions: np.ndarray
-    model: FuzzyTimeSeries
-    execution_time: float = 0.0
+
+    def __init__(self, config: ExperimentConfig, train_metrics: Dict[str, float],
+                 test_metrics: Dict[str, float], train_predictions: np.ndarray,
+                 test_predictions: np.ndarray, model: FuzzyTimeSeries, execution_time: float = 0.0):
+        self.config = config
+        self.train_metrics = train_metrics
+        self.test_metrics = test_metrics
+        self.train_predictions = train_predictions
+        self.test_predictions = test_predictions
+        self.model = model
+        self.execution_time = execution_time
 
     def to_dict(self) -> Dict:
         """Convert to dictionary for serialization (excluding large arrays and model)."""
@@ -150,12 +152,13 @@ class ExperimentRunner:
         execution_time = time.time() - start_time
 
         # Calculate metrics
-        train_metrics = FTSMetrics.all_metrics(
+        metrics_calculator = FTSMetrics()
+        train_metrics = metrics_calculator.all_metrics(
             self.train_data[config.order:],  # Skip first 'order' values
             train_predictions[config.order:]
         )
 
-        test_metrics = FTSMetrics.all_metrics(
+        test_metrics = metrics_calculator.all_metrics(
             self.test_data,
             test_predictions
         )

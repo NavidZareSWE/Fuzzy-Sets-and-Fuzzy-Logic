@@ -10,8 +10,7 @@ class DataLoader:
     Supports CSV and Excel file formats.
     """
 
-    @staticmethod
-    def load_mackey_glass(filepath: str) -> np.ndarray:
+    def load_mackey_glass(self, filepath: str) -> np.ndarray:
         """
         Load the Mackey-Glass time series dataset.
 
@@ -32,8 +31,7 @@ class DataLoader:
 
         return data.astype(np.float64)
 
-    @staticmethod
-    def load_influenza_data(filepath: str) -> Dict[str, np.ndarray]:
+    def load_influenza_data(self, filepath: str) -> Dict[str, np.ndarray]:
         """
         Load the Influenza specimens dataset.
 
@@ -67,8 +65,7 @@ class DataLoader:
 
         return result
 
-    @staticmethod
-    def preprocess(data: np.ndarray,
+    def preprocess(self, data: np.ndarray,
                    normalize: bool = False,
                    remove_nan: bool = True,
                    smooth: bool = False,
@@ -106,8 +103,7 @@ class DataLoader:
 
         return result
 
-    @staticmethod
-    def train_test_split(data: np.ndarray,
+    def train_test_split(self, data: np.ndarray,
                          train_ratio: float = 0.8) -> Tuple[np.ndarray, np.ndarray]:
         """
         Split data into training and testing sets.
@@ -122,8 +118,7 @@ class DataLoader:
         train_size = int(len(data) * train_ratio)
         return data[:train_size], data[train_size:]
 
-    @staticmethod
-    def create_sliding_window(data: np.ndarray,
+    def create_sliding_window(self, data: np.ndarray,
                               window_size: int) -> Tuple[np.ndarray, np.ndarray]:
         """
         Create sliding window samples for machine learning.
@@ -161,11 +156,14 @@ def load_datasets(mackey_glass_path: str,
     """
     datasets = {}
 
+    # Create DataLoader instance
+    loader = DataLoader()
+
     # Load Mackey-Glass
-    datasets['Mackey-Glass'] = DataLoader.load_mackey_glass(mackey_glass_path)
+    datasets['Mackey-Glass'] = loader.load_mackey_glass(mackey_glass_path)
 
     # Load Influenza data
-    influenza_data = DataLoader.load_influenza_data(influenza_path)
+    influenza_data = loader.load_influenza_data(influenza_path)
     datasets['Total Specimens'] = influenza_data['total_specimens']
     datasets['Influenza A'] = influenza_data['influenza_a']
     datasets['Influenza B'] = influenza_data['influenza_b']

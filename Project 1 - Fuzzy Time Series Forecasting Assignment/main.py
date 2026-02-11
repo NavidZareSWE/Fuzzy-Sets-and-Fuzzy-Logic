@@ -49,14 +49,17 @@ def run_analysis():
     print("LOADING DATASETS")
     print("="*70)
 
+    # Create DataLoader instance
+    loader = DataLoader()
+
     # Load Mackey-Glass
     print("\nLoading Mackey-Glass dataset...")
-    mackey_glass_data = DataLoader.load_mackey_glass(MACKEY_GLASS_PATH)
+    mackey_glass_data = loader.load_mackey_glass(MACKEY_GLASS_PATH)
     describe_dataset(mackey_glass_data, "Mackey-Glass")
 
     # Load Influenza data
     print("\nLoading Influenza dataset...")
-    influenza_data = DataLoader.load_influenza_data(INFLUENZA_PATH)
+    influenza_data = loader.load_influenza_data(INFLUENZA_PATH)
     describe_dataset(influenza_data['total_specimens'], "Total Specimens")
     describe_dataset(influenza_data['influenza_a'], "Influenza A")
     describe_dataset(influenza_data['influenza_b'], "Influenza B")
@@ -314,10 +317,10 @@ def generate_comprehensive_report(all_results, output_dir):
 
         f.write("### Performance Metrics\n\n")
         f.write(
-            "- **RMSE:** Root Mean Square Error = [ok](mean((actual - predicted)²))\n")
+            "- **RMSE:** Root Mean Square Error = sqrt(mean((actual - predicted)^2))\n")
         f.write("- **MAE:** Mean Absolute Error = mean(|actual - predicted|)\n")
         f.write(
-            "- **MAPE:** Mean Absolute Percentage Error = mean(|actual - predicted| / |actual|) × 100\n\n")
+            "- **MAPE:** Mean Absolute Percentage Error = mean(|actual - predicted| / |actual|) x 100\n\n")
 
         f.write("---\n\n")
         f.write("## Visualizations\n\n")

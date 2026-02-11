@@ -34,9 +34,9 @@ def generate_fuzzy_sets_appendix(model, output_path: str):
         f.write("="*60 + "\n\n")
 
         f.write(f"Universe of Discourse:\n")
-        f.write(f"  Lower Bound: {model.universe.lower_bound:.6f}\n")
-        f.write(f"  Upper Bound: {model.universe.upper_bound:.6f}\n")
-        f.write(f"  Range: {model.universe.range:.6f}\n\n")
+        f.write(f"  Lower Bound: {model.universe.lower_bound():.6f}\n")
+        f.write(f"  Upper Bound: {model.universe.upper_bound():.6f}\n")
+        f.write(f"  Range: {model.universe.get_range():.6f}\n\n")
 
         f.write(
             f"Membership Function Type: {model.mf_type.value.capitalize()}\n")
@@ -102,7 +102,7 @@ The bell MF offers adjustable shape via parameters (a, b, c):
 3. Calculate center points evenly spaced across universe
 4. Define membership function parameters based on type:
    - For triangular: left = center - width, right = center + width
-   - For Gaussian: σ = width / (2 × [ok](2 × ln(2)))
+   - For Gaussian: σ = width / (2 × sqrt(2 × ln(2)))
 
 ### 4. Fuzzification
 
@@ -294,8 +294,8 @@ def save_best_model_config(result, output_path: str):
         'test_metrics': result.test_metrics,
         'num_flrgs': len(result.model.flrgs),
         'universe': {
-            'lower_bound': result.model.universe.lower_bound,
-            'upper_bound': result.model.universe.upper_bound
+            'lower_bound': result.model.universe.lower_bound(),
+            'upper_bound': result.model.universe.upper_bound()
         },
         'fuzzy_sets': result.model.get_fuzzy_sets_info()
     }
