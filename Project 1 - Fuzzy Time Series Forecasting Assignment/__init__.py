@@ -1,19 +1,20 @@
 """
-Fuzzy Time Series Forecasting Package
-=====================================
+    =====================================
+    Fuzzy Time Series Forecasting Package
+    =====================================
 
-A complete implementation of First-Order and High-Order Fuzzy Time Series
-forecasting methods from scratch.
+        A complete implementation of First-Order and High-Order Fuzzy Time Series
+        forecasting methods from scratch.
 
-Modules:
-- fts_core: Core FTS algorithms and data structures
-- fts_data: Data loading and preprocessing utilities
-- fts_experiments: Experiment runner and parameter tuning
-- fts_visualization: Plotting and visualization tools
-- fts_report: Report generation utilities
+    Modules:
+        - fts_core: Core FTS algorithms and data structures
+        - fts_data: Data loading and preprocessing utilities
+        - fts_experiments: Experiment runner and parameter tuning
+        - fts_visualization: Plotting and visualization tools
+        - fts_report: Report generation utilities
 
-    Author: Navid
-    Course: Fuzzy Sets and Systems
+            Author: Navid Zare
+            Course: Fuzzy Sets and Systems
 """
 
 from fts_core import (
