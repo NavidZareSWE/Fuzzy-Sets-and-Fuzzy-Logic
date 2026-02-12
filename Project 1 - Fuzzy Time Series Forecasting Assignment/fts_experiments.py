@@ -1,27 +1,23 @@
 import numpy as np
 import pandas as pd
-from typing import List, Dict, Tuple, Optional, Any
 from itertools import product
 import json
 import os
 from datetime import datetime
 
-from fts_core import (
-    FuzzyTimeSeries, MembershipFunctionType, FTSMetrics
-)
+from fts_core import FuzzyTimeSeries, MembershipFunctionType, FTSMetrics
 from fts_visualization import FTSVisualizer
 
 
 class ExperimentConfig:
-    """Configuration for a single experiment."""
 
-    def __init__(self, order: int, num_partitions: int, mf_type: MembershipFunctionType, margin_percent: float = 0.1):
+    def __init__(self, order, num_partitions, mf_type, margin_percent=0.1):
         self.order = order
         self.num_partitions = num_partitions
         self.mf_type = mf_type
         self.margin_percent = margin_percent
 
-    def to_dict(self) -> Dict:
+    def to_dict(self):
         return {
             'order': self.order,
             'partitions': self.num_partitions,
@@ -29,7 +25,7 @@ class ExperimentConfig:
             'margin_percent': self.margin_percent
         }
 
-    def from_dict(self, d: Dict) -> 'ExperimentConfig':
+    def from_dict(self, d):
         return ExperimentConfig(
             order=d['order'],
             num_partitions=d['partitions'],
@@ -41,9 +37,7 @@ class ExperimentConfig:
 class ExperimentResult:
     """Results from a single experiment run."""
 
-    def __init__(self, config: ExperimentConfig, train_metrics: Dict[str, float],
-                 test_metrics: Dict[str, float], train_predictions: np.ndarray,
-                 test_predictions: np.ndarray, model: FuzzyTimeSeries, execution_time: float = 0.0):
+    def __init__(self, config, train_metrics, test_metrics, train_predictions, test_predictions, model, execution_time=0.0):
         self.config = config
         self.train_metrics = train_metrics
         self.test_metrics = test_metrics
@@ -52,8 +46,7 @@ class ExperimentResult:
         self.model = model
         self.execution_time = execution_time
 
-    def to_dict(self) -> Dict:
-        """Convert to dictionary for serialization (excluding large arrays and model)."""
+    def to_dict(self):
         return {
             **self.config.to_dict(),
             'train_RMSE': self.train_metrics['RMSE'],
@@ -65,8 +58,7 @@ class ExperimentResult:
             'execution_time': self.execution_time
         }
 
-    def get_summary_dict(self) -> Dict:
-        """Get a simplified summary for display."""
+    def get_summary_dict(self):
         return {
             'order': self.config.order,
             'partitions': self.config.num_partitions,
@@ -78,47 +70,20 @@ class ExperimentResult:
 
 
 class ExperimentRunner:
-    """
-    Runs systematic experiments with different FTS configurations.
-    """
 
-    def __init__(
-        self,
-        data: np.ndarray,
-        train_ratio: float = 0.8,
-        dataset_name: str = "Dataset"
-    ):
-        """
-        Initialize the experiment runner.
-
-        Args:
-            data: Time series data
-            train_ratio: Ratio of data to use for training (default 80%)
-            dataset_name: Name of the dataset for labeling
-        """
+    def __init__(self, data, train_ratio=0.8, dataset_name="Dataset"):
         self.data = np.array(data).flatten()
         self.train_ratio = train_ratio
         self.dataset_name = dataset_name
 
-        # Split data
         self.train_size = int(len(self.data) * train_ratio)
         self.train_data = self.data[:self.train_size]
         self.test_data = self.data[self.train_size:]
 
-        # Storage for results
-        self.results: List[ExperimentResult] = []
-        self.best_result: Optional[ExperimentResult] = None
+        self.results = []
+        self.best_result = None
 
-    def run_single_experiment(self, config: ExperimentConfig) -> ExperimentResult:
-        """
-        Run a single experiment with the given configuration.
-
-        Args:
-            config: Experiment configuration
-
-        Returns:
-            ExperimentResult with all metrics and predictions
-        """
+    def run_single_experiment(self, config):
         import time
         start_time = time.time()
 
@@ -173,25 +138,7 @@ class ExperimentRunner:
             execution_time=execution_time
         )
 
-    def run_grid_search(
-        self,
-        orders: List[int] = [1, 2, 3, 4, 5],
-        partitions: List[int] = [5, 7, 9, 11, 13, 15],
-        mf_types: List[MembershipFunctionType] = None,
-        verbose: bool = True
-    ) -> List[ExperimentResult]:
-        """
-        Run a grid search over parameter space.
-
-        Args:
-            orders: List of orders to test
-            partitions: List of partition counts to test
-            mf_types: List of membership function types to test
-            verbose: Whether to print progress
-
-        Returns:
-            List of all experiment results
-        """
+    def run_grid_search(self, orders=[1, 2, 3, 4, 5], partitions=[5, 7, 9, 11, 13, 15], mf_types=None, verbose=True):
         if mf_types is None:
             mf_types = [
                 MembershipFunctionType.TRIANGULAR,
@@ -205,11 +152,7 @@ class ExperimentRunner:
         if verbose:
             print(f"\n{'='*60}")
             print(f"Grid Search for {self.dataset_name}")
-            print(f"{'='*60}")
             print(f"Total experiments: {total_experiments}")
-            print(f"Orders: {orders}")
-            print(f"Partitions: {partitions}")
-            print(f"MF Types: {[mf.value for mf in mf_types]}")
             print(f"{'='*60}\n")
 
         self.results = []
@@ -233,17 +176,14 @@ class ExperimentRunner:
                 if verbose:
                     print(f"[{idx+1}/{total_experiments}] ERROR: {e}")
 
-        # Find best result
         self._find_best_result()
 
         return self.results
 
-    def _find_best_result(self, metric: str = 'RMSE'):
-        """Find the best result based on test metrics."""
+    def _find_best_result(self, metric='RMSE'):
         if not self.results:
             return
 
-        # Filter out results with NaN metrics
         valid_results = [r for r in self.results
                          if not np.isnan(r.test_metrics.get(metric, np.nan))]
 
@@ -251,8 +191,7 @@ class ExperimentRunner:
             self.best_result = min(valid_results,
                                    key=lambda r: r.test_metrics[metric])
 
-    def get_results_dataframe(self) -> pd.DataFrame:
-        """Convert results to a pandas DataFrame for analysis."""
+    def get_results_dataframe(self):
         if not self.results:
             return pd.DataFrame()
 
@@ -260,8 +199,7 @@ class ExperimentRunner:
         df = pd.DataFrame(data)
         return df.sort_values('test_RMSE').reset_index(drop=True)
 
-    def get_best_by_mf_type(self) -> Dict[str, ExperimentResult]:
-        """Get the best result for each membership function type."""
+    def get_best_by_mf_type(self):
         best_by_type = {}
 
         for result in self.results:
@@ -272,8 +210,7 @@ class ExperimentRunner:
 
         return best_by_type
 
-    def get_best_by_order(self) -> Dict[int, ExperimentResult]:
-        """Get the best result for each order."""
+    def get_best_by_order(self):
         best_by_order = {}
 
         for result in self.results:
@@ -284,8 +221,7 @@ class ExperimentRunner:
 
         return best_by_order
 
-    def compare_orders(self) -> pd.DataFrame:
-        """Generate a comparison table of FOFTS vs HOFTS performance."""
+    def compare_orders(self):
         best_by_order = self.get_best_by_order()
 
         data = []
@@ -311,14 +247,9 @@ class ExperimentRunner:
         print(f"\n{'='*70}")
         print(f"EXPERIMENT SUMMARY: {self.dataset_name}")
         print(f"{'='*70}")
-        print(f"Total experiments run: {len(self.results)}")
-        print(f"Training samples: {self.train_size}")
-        print(f"Testing samples: {len(self.test_data)}")
 
         if self.best_result:
-            print(f"\n{'='*70}")
-            print("BEST CONFIGURATION:")
-            print(f"{'='*70}")
+            print(f"\nBEST CONFIGURATION:")
             print(f"  Order: {self.best_result.config.order}")
             print(f"  Partitions: {self.best_result.config.num_partitions}")
             print(f"  MF Type: {self.best_result.config.mf_type.value}")
@@ -327,27 +258,13 @@ class ExperimentRunner:
             print(f"    MAE: {self.best_result.test_metrics['MAE']:.6f}")
             print(f"    MAPE: {self.best_result.test_metrics['MAPE']:.2f}%")
 
-        # Compare orders
-        print(f"\n{'='*70}")
-        print("COMPARISON BY ORDER (First-Order vs High-Order):")
-        print(f"{'='*70}")
+        print(f"\nFirst-Order vs High-Order Comparison:")
         comparison_df = self.compare_orders()
         print(comparison_df.to_string(index=False))
 
-        # Best by MF type
-        print(f"\n{'='*70}")
-        print("BEST BY MEMBERSHIP FUNCTION TYPE:")
-        print(f"{'='*70}")
-        best_by_mf = self.get_best_by_mf_type()
-        for mf_type, result in sorted(best_by_mf.items()):
-            print(f"  {mf_type:12s}: RMSE={result.test_metrics['RMSE']:.6f} "
-                  f"(order={result.config.order}, partitions={result.config.num_partitions})")
-
-    def save_results(self, output_dir: str, prefix: str = ""):
-        """Save experiment results and visualizations."""
+    def save_results(self, output_dir, prefix=""):
         os.makedirs(output_dir, exist_ok=True)
 
-        # Save results DataFrame
         df = self.get_results_dataframe()
         df.to_csv(os.path.join(
             output_dir, f"{prefix}results.csv"), index=False)
@@ -367,11 +284,9 @@ class ExperimentRunner:
         with open(os.path.join(output_dir, f"{prefix}summary.json"), 'w') as f:
             json.dump(summary, f, indent=2)
 
-        # Generate visualizations
         visualizer = FTSVisualizer()
 
         if self.best_result:
-            # Plot membership functions for best model
             visualizer.plot_membership_functions(
                 self.best_result.model.fuzzy_sets,
                 self.best_result.model.universe,
@@ -411,7 +326,6 @@ class ExperimentRunner:
                     output_dir, f"{prefix}heatmap_{mf_type}.png")
             )
 
-        # Plot metrics comparison
         visualizer.plot_error_metrics_comparison(
             results_dicts,
             x_param='partitions',
@@ -433,11 +347,10 @@ class MultiDatasetExperiment:
     """
 
     def __init__(self):
-        self.datasets: Dict[str, np.ndarray] = {}
-        self.runners: Dict[str, ExperimentRunner] = {}
+        self.datasets = {}
+        self.runners = {}
 
-    def add_dataset(self, name: str, data: np.ndarray, train_ratio: float = 0.8):
-        """Add a dataset for experimentation."""
+    def add_dataset(self, name, data, train_ratio=0.8):
         self.datasets[name] = np.array(data).flatten()
         self.runners[name] = ExperimentRunner(
             self.datasets[name],
@@ -445,14 +358,7 @@ class MultiDatasetExperiment:
             dataset_name=name
         )
 
-    def run_all(
-        self,
-        orders: List[int] = [1, 2, 3, 4, 5],
-        partitions: List[int] = [5, 7, 9, 11, 13, 15],
-        mf_types: List[MembershipFunctionType] = None,
-        output_dir: str = "results",
-        verbose: bool = True
-    ):
+    def run_all(self, orders=[1, 2, 3, 4, 5], partitions=[5, 7, 9, 11, 13, 15], mf_types=None, output_dir="results", verbose=True):
         """Run experiments on all datasets."""
         for name, runner in self.runners.items():
             print(f"\n{'#'*70}")
@@ -468,13 +374,11 @@ class MultiDatasetExperiment:
 
             runner.print_summary()
 
-            # Save results
             dataset_output_dir = os.path.join(
                 output_dir, name.replace(' ', '_'))
             runner.save_results(dataset_output_dir)
 
-    def get_comparison_table(self) -> pd.DataFrame:
-        """Generate a comparison table across all datasets."""
+    def get_comparison_table(self):
         data = []
 
         for name, runner in self.runners.items():

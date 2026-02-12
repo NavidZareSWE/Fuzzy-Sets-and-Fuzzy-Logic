@@ -34,37 +34,25 @@ TRAIN_RATIO = 0.8
 
 
 def run_analysis():
-    """Run the complete FTS analysis on all datasets."""
     print("="*70)
     print("FUZZY TIME SERIES FORECASTING PROJECT")
     print("="*70)
     print(f"Start Time: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}")
-    print(f"Output Directory: {OUTPUT_DIR}")
 
-    # Create output directory
     os.makedirs(OUTPUT_DIR, exist_ok=True)
 
-    # Load all datasets
-    print("\n" + "="*70)
-    print("LOADING DATASETS")
-    print("="*70)
+    print("\nLoading datasets...")
 
-    # Create DataLoader instance
     loader = DataLoader()
 
-    # Load Mackey-Glass
-    print("\nLoading Mackey-Glass dataset...")
     mackey_glass_data = loader.load_mackey_glass(MACKEY_GLASS_PATH)
     describe_dataset(mackey_glass_data, "Mackey-Glass")
 
-    # Load Influenza data
-    print("\nLoading Influenza dataset...")
     influenza_data = loader.load_influenza_data(INFLUENZA_PATH)
     describe_dataset(influenza_data['total_specimens'], "Total Specimens")
     describe_dataset(influenza_data['influenza_a'], "Influenza A")
     describe_dataset(influenza_data['influenza_b'], "Influenza B")
 
-    # All results storage
     all_results = {}
 
     # =========================================================================
@@ -115,9 +103,6 @@ def run_analysis():
     runner_ts.save_results(os.path.join(OUTPUT_DIR, "total_specimens"))
     all_results['Total Specimens'] = runner_ts
 
-    # =========================================================================
-    # DATASET 3: Influenza A
-    # =========================================================================
     print("\n" + "#"*70)
     print("# DATASET 3: INFLUENZA A")
     print("#"*70)
@@ -139,9 +124,6 @@ def run_analysis():
     runner_a.save_results(os.path.join(OUTPUT_DIR, "influenza_a"))
     all_results['Influenza A'] = runner_a
 
-    # =========================================================================
-    # DATASET 4: Influenza B
-    # =========================================================================
     print("\n" + "#"*70)
     print("# DATASET 4: INFLUENZA B")
     print("#"*70)
@@ -163,14 +145,8 @@ def run_analysis():
     runner_b.save_results(os.path.join(OUTPUT_DIR, "influenza_b"))
     all_results['Influenza B'] = runner_b
 
-    # =========================================================================
-    # GENERATE COMPREHENSIVE REPORT
-    # =========================================================================
     generate_comprehensive_report(all_results, OUTPUT_DIR)
 
-    # =========================================================================
-    # FINAL SUMMARY
-    # =========================================================================
     print("\n" + "="*70)
     print("FINAL SUMMARY - ALL DATASETS")
     print("="*70)
@@ -191,7 +167,6 @@ def run_analysis():
     summary_df = pd.DataFrame(summary_data)
     print("\n" + summary_df.to_string(index=False))
 
-    # Save final summary
     summary_df.to_csv(os.path.join(
         OUTPUT_DIR, "final_summary.csv"), index=False)
 
@@ -205,8 +180,6 @@ def run_analysis():
 
 
 def generate_comprehensive_report(all_results, output_dir):
-    """Generate a comprehensive markdown report."""
-
     report_path = os.path.join(output_dir, "COMPREHENSIVE_REPORT.md")
 
     with open(report_path, 'w') as f:

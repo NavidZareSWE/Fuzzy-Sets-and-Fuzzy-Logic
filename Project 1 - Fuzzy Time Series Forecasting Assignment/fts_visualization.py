@@ -2,18 +2,14 @@ import numpy as np
 import matplotlib.pyplot as plt
 from matplotlib.figure import Figure
 from matplotlib.axes import Axes
-from typing import List, Dict, Optional, Tuple, Union
 import os
 
 # Import from core module
-from fts_core import (
-    FuzzyTimeSeries, FuzzySet, MembershipFunctionType,
-    UniverseOfDiscourse, FTSMetrics
-)
+from fts_core import FuzzyTimeSeries, FuzzySet, MembershipFunctionType, UniverseOfDiscourse, FTSMetrics
 
 
 class FTSVisualizer:
-    def __init__(self, figsize: Tuple[int, int] = (12, 8), style: str = 'seaborn-v0_8-whitegrid'):
+    def __init__(self, figsize=(12, 8), style='seaborn-v0_8-whitegrid'):
         self.figsize = figsize
         try:
             plt.style.use(style)
@@ -30,14 +26,7 @@ class FTSVisualizer:
             'error': '#C73E1D'
         }
 
-    def plot_membership_functions(
-        self,
-        fuzzy_sets: List[FuzzySet],
-        universe: UniverseOfDiscourse,
-        title: str = "Fuzzy Set Membership Functions",
-        save_path: Optional[str] = None,
-        num_points: int = 500
-    ) -> Figure:
+    def plot_membership_functions(self, fuzzy_sets, universe, title="Fuzzy Set Membership Functions", save_path=None, num_points=500):
         fig, ax = plt.subplots(figsize=self.figsize)
 
         # Generate x values across the universe
@@ -80,14 +69,7 @@ class FTSVisualizer:
 
         return fig
 
-    def plot_time_series_comparison(
-        self,
-        actual: np.ndarray,
-        predicted: np.ndarray,
-        title: str = "Actual vs Predicted Time Series",
-        train_end_idx: Optional[int] = None,
-        save_path: Optional[str] = None
-    ) -> Figure:
+    def plot_time_series_comparison(self, actual, predicted, title="Actual vs Predicted Time Series", train_end_idx=None, save_path=None):
         fig, axes = plt.subplots(2, 1, figsize=(
             self.figsize[0], self.figsize[1] * 1.2))
 
@@ -141,26 +123,9 @@ class FTSVisualizer:
 
         return fig
 
-    def plot_error_metrics_comparison(
-        self,
-        results: List[Dict],
-        x_param: str = 'partitions',
-        group_param: str = 'order',
-        title: str = "Performance Metrics Across Parameter Space",
-        save_path: Optional[str] = None
-    ) -> Figure:
+    def plot_error_metrics_comparison(self, results, x_param='partitions', group_param='order', title="Performance Metrics Across Parameter Space", save_path=None):
         """
         Plot error metrics across different parameter configurations.
-
-        Args:
-            results: List of dictionaries with parameter values and metrics
-            x_param: Parameter to use for x-axis
-            group_param: Parameter to group by (different lines)
-            title: Plot title
-            save_path: Path to save figure
-
-        Returns:
-            Matplotlib Figure object
         """
         fig, axes = plt.subplots(1, 3, figsize=(
             self.figsize[0] * 1.2, self.figsize[1] * 0.6))
@@ -205,13 +170,7 @@ class FTSVisualizer:
 
         return fig
 
-    def plot_forecast(
-        self,
-        historical: np.ndarray,
-        forecast: np.ndarray,
-        title: str = "Time Series Forecast",
-        save_path: Optional[str] = None
-    ) -> Figure:
+    def plot_forecast(self, historical, forecast, title="Time Series Forecast", save_path=None):
 
         fig, ax = plt.subplots(figsize=self.figsize)
 
@@ -251,26 +210,9 @@ class FTSVisualizer:
 
         return fig
 
-    def plot_fuzzification(
-        self,
-        data: np.ndarray,
-        fuzzified: List[str],
-        fuzzy_sets: List[FuzzySet],
-        title: str = "Time Series Fuzzification",
-        save_path: Optional[str] = None
-    ) -> Figure:
+    def plot_fuzzification(self, data, fuzzified, fuzzy_sets, title="Time Series Fuzzification", save_path=None):
         """
         Plot the original time series with fuzzification overlay.
-
-        Args:
-            data: Original time series data
-            fuzzified: List of fuzzy set names for each data point
-            fuzzy_sets: List of fuzzy sets used
-            title: Plot title
-            save_path: Path to save figure
-
-        Returns:
-            Matplotlib Figure object
         """
         fig, axes = plt.subplots(2, 1, figsize=(
             self.figsize[0], self.figsize[1] * 1.2))
@@ -320,28 +262,9 @@ class FTSVisualizer:
 
         return fig
 
-    def plot_parameter_heatmap(
-        self,
-        results: List[Dict],
-        x_param: str = 'partitions',
-        y_param: str = 'order',
-        metric: str = 'RMSE',
-        title: str = None,
-        save_path: Optional[str] = None
-    ) -> Figure:
+    def plot_parameter_heatmap(self, results, x_param='partitions', y_param='order', metric='RMSE', title=None, save_path=None):
         """
         Create a heatmap of performance metrics across two parameters.
-
-        Args:
-            results: List of dictionaries with parameter values and metrics
-            x_param: Parameter for x-axis
-            y_param: Parameter for y-axis
-            metric: Metric to display in heatmap
-            title: Plot title
-            save_path: Path to save figure
-
-        Returns:
-            Matplotlib Figure object
         """
         # Extract unique parameter values
         x_vals = sorted(set(r[x_param] for r in results))
@@ -394,9 +317,7 @@ class FTSVisualizer:
         return fig
 
 
-def save_all_plots(visualizer: FTSVisualizer, model: FuzzyTimeSeries,
-                   actual: np.ndarray, predicted: np.ndarray,
-                   output_dir: str, prefix: str = ""):
+def save_all_plots(visualizer, model, actual, predicted, output_dir, prefix=""):
 
     os.makedirs(output_dir, exist_ok=True)
 

@@ -1,11 +1,10 @@
 import os
 import json
 from datetime import datetime
-from typing import Dict, List, Any, Optional
 import numpy as np
 
 
-def generate_flrg_appendix(model, output_path: str):
+def generate_flrg_appendix(model, output_path):
     """Generate a text file containing all FLRGs for a model."""
     with open(output_path, 'w') as f:
         f.write("="*60 + "\n")
@@ -26,7 +25,7 @@ def generate_flrg_appendix(model, output_path: str):
             f.write(f"{i:4d}. {flrg}\n")
 
 
-def generate_fuzzy_sets_appendix(model, output_path: str):
+def generate_fuzzy_sets_appendix(model, output_path):
     """Generate a text file containing fuzzy set definitions."""
     with open(output_path, 'w') as f:
         f.write("="*60 + "\n")
@@ -55,7 +54,7 @@ def generate_fuzzy_sets_appendix(model, output_path: str):
             f.write("\n")
 
 
-def generate_methodology_section() -> str:
+def generate_methodology_section():
     """Generate the methodology section text."""
     return """
 ## Methodology
@@ -142,7 +141,7 @@ We use the centroid defuzzification method:
 """
 
 
-def generate_complete_report(all_results: Dict, output_dir: str):
+def generate_complete_report(all_results, output_dir):
     """Generate a complete text-based report."""
 
     report_path = os.path.join(output_dir, "FULL_REPORT.txt")
@@ -283,7 +282,7 @@ def generate_complete_report(all_results: Dict, output_dir: str):
     return report_path
 
 
-def save_best_model_config(result, output_path: str):
+def save_best_model_config(result, output_path):
     """Save the best model configuration to a JSON file."""
     config = {
         'order': result.config.order,
@@ -304,7 +303,7 @@ def save_best_model_config(result, output_path: str):
         json.dump(config, f, indent=2)
 
 
-def generate_all_appendices(all_results: Dict, output_dir: str):
+def generate_all_appendices(all_results, output_dir):
     """Generate all appendix files."""
 
     appendix_dir = os.path.join(output_dir, "appendices")
