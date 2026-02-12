@@ -26,15 +26,15 @@ python predict.py
 
 ## Project Structure
 ```
-├── config.py               # All tuneable parameters
-├── data_loader.py           # Data I/O and normalisation
-├── membership_functions.py  # Gaussian MFs
-├── clustering.py            # Subtractive clustering
-├── tsk_system.py            # TSK rules and inference engine
-├── training.py              # Hybrid learning (LSE + gradient descent)
-├── evaluation.py            # RMSE computation
-├── main.py                  # Training pipeline
-├── predict.py               # Interactive prediction interface
-├── data/                    # Dataset (Excel)
-└── output/                  # Trained models and results
+├ config.py               # All tuneable parameters
+├ data_loader.py           # Data I/O and normalisation
+├ membership_functions.py  # Gaussian MFs
+├ clustering.py            # Subtractive clustering
+├ tsk_system.py            # TSK rules and inference engine
+├ training.py              # Hybrid learning (LSE + gradient descent)
+├ evaluation.py            # RMSE computation
+├ main.py                  # Training pipeline
+├ predict.py               # Interactive prediction interface
+├ data/                    # Dataset (Excel)
+└ output/                  # Trained models and results
 ```

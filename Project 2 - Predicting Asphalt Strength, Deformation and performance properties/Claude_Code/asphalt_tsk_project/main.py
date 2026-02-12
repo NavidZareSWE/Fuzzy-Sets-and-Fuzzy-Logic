@@ -28,7 +28,7 @@ from evaluation import rmse, print_results_table
 def main():
     np.random.seed(RANDOM_SEED)
 
-    # ── 1. Load and split data ──
+    #  1. Load and split data
     print("[1/5] Loading dataset...")
     df = load_raw_data()
     print(f"      Total samples: {len(df)}")
@@ -36,7 +36,7 @@ def main():
     X_train_raw, X_test_raw, y_train_raw, y_test_raw = split_data(df)
     print(f"      Train: {X_train_raw.shape[0]},  Test: {X_test_raw.shape[0]}")
 
-    # ── 2. Normalise ──
+    #  2. Normalise
     print("[2/5] Normalising data...")
     normaliser = DataNormaliser()
     normaliser.fit(X_train_raw, y_train_raw)
@@ -46,13 +46,13 @@ def main():
     y_train = normaliser.transform_y(y_train_raw)
     y_test = normaliser.transform_y(y_test_raw)
 
-    # ── 3. Build and tune one TSK system per output ──
+    #  3. Build and tune one TSK system per output
     print("[3/5] Building and tuning TSK systems...")
     systems = {}
     histories = {}
 
     for idx, output_name in enumerate(OUTPUT_COLUMNS):
-        print(f"\n  ── {output_name} ──")
+        print(f"\n   {output_name} ")
         y_tr_col = y_train[:, idx]
         y_te_col = y_test[:, idx]
 
@@ -66,7 +66,7 @@ def main():
         systems[output_name] = system
         histories[output_name] = history
 
-    # ── 4. Evaluate ──
+    #  4. Evaluate
     print("\n[4/5] Evaluating on train and test sets...")
     results = {}
 
@@ -96,7 +96,7 @@ def main():
     print()
     print_results_table(results)
 
-    # ── 5. Save artefacts ──
+    #  5. Save artefacts
     print("\n[5/5] Saving results...")
     os.makedirs("output", exist_ok=True)
 
@@ -116,13 +116,17 @@ def main():
     with open("output/rule_summary.txt", "w") as f:
         for output_name, system in systems.items():
             f.write(f"{'='*60}\n")
-            f.write(f"Output: {output_name}  |  Number of rules: {system.n_rules}\n")
+            f.write(
+                f"Output: {output_name}  |  Number of rules: {system.n_rules}\n")
             f.write(f"{'='*60}\n")
             for r_idx, rule in enumerate(system.rules):
                 f.write(f"\nRule {r_idx + 1}:\n")
-                f.write(f"  Antecedent centres: {np.round(rule.antecedent_centres, 5).tolist()}\n")
-                f.write(f"  Antecedent sigmas:  {np.round(rule.antecedent_sigmas, 5).tolist()}\n")
-                f.write(f"  Consequent params:  {np.round(rule.consequent_params, 5).tolist()}\n")
+                f.write(
+                    f"  Antecedent centres: {np.round(rule.antecedent_centres, 5).tolist()}\n")
+                f.write(
+                    f"  Antecedent sigmas:  {np.round(rule.antecedent_sigmas, 5).tolist()}\n")
+                f.write(
+                    f"  Consequent params:  {np.round(rule.consequent_params, 5).tolist()}\n")
             f.write("\n")
 
     print("      Results saved to output/")

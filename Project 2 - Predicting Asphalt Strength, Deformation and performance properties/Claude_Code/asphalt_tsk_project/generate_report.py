@@ -10,7 +10,7 @@ import os
 
 doc = Document()
 
-# ── Styles ──
+#  Styles
 style = doc.styles["Normal"]
 font = style.font
 font.name = "Times New Roman"
@@ -22,7 +22,9 @@ for level in range(1, 4):
     hs.font.name = "Times New Roman"
     hs.font.color.rgb = RGBColor(0x1A, 0x1A, 0x2E)
 
-# ── Helper functions ──
+#  Helper functions
+
+
 def add_para(text, bold=False, align=WD_ALIGN_PARAGRAPH.JUSTIFY, size=12, after=6):
     p = doc.add_paragraph()
     p.alignment = align
@@ -32,6 +34,7 @@ def add_para(text, bold=False, align=WD_ALIGN_PARAGRAPH.JUSTIFY, size=12, after=
     run.font.name = "Times New Roman"
     run.bold = bold
     return p
+
 
 def add_table_row(table, cells_text, bold=False, shade=None):
     row = table.add_row()
@@ -51,6 +54,7 @@ def add_table_row(table, cells_text, bold=False, shade=None):
                 qn("w:val"): "clear"
             })
             shading.append(s)
+
 
 # ═══════════════════════════════════════════════
 # TITLE PAGE
@@ -430,7 +434,8 @@ for i, txt in enumerate(["Output", "RMSE (Train)", "RMSE (Test)"]):
     run.font.size = Pt(11)
     run.font.name = "Times New Roman"
     shading = hdr[i]._element.get_or_add_tcPr()
-    s = shading.makeelement(qn("w:shd"), {qn("w:fill"): "2E4057", qn("w:val"): "clear"})
+    s = shading.makeelement(
+        qn("w:shd"), {qn("w:fill"): "2E4057", qn("w:val"): "clear"})
     shading.append(s)
     run.font.color.rgb = RGBColor(0xFF, 0xFF, 0xFF)
 
@@ -560,7 +565,7 @@ add_para(
     "Klir and Yuan, 1995)."
 )
 
-# ── Save ──
+#  Save
 output_path = "/home/claude/asphalt_tsk_project/output/Report_Asphalt_TSK.docx"
 os.makedirs(os.path.dirname(output_path), exist_ok=True)
 doc.save(output_path)

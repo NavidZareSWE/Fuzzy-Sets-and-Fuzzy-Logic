@@ -83,7 +83,7 @@ def interactive_mode():
         raw_input = np.array(values)
         preds = predict_single(systems, normaliser, raw_input)
 
-        print("\n  ── Predicted Outputs ──")
+        print("\n   Predicted Outputs ")
         for name, val in preds.items():
             print(f"  {name:>12}: {val:.4f}")
         print()

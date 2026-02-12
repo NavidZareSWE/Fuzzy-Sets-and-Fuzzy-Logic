@@ -145,7 +145,7 @@ def run_analysis():
     runner_b.save_results(os.path.join(OUTPUT_DIR, "influenza_b"))
     all_results['Influenza B'] = runner_b
 
-    generate_comprehensive_report(all_results, OUTPUT_DIR)
+    # generate_comprehensive_report(all_results, OUTPUT_DIR)
 
     print("\n" + "="*70)
     print("FINAL SUMMARY - ALL DATASETS")
@@ -179,6 +179,7 @@ def run_analysis():
     return all_results
 
 
+"""
 def generate_comprehensive_report(all_results, output_dir):
     report_path = os.path.join(output_dir, "COMPREHENSIVE_REPORT.md")
 
@@ -305,6 +306,7 @@ def generate_comprehensive_report(all_results, output_dir):
         f.write("- Fuzzification visualization\n\n")
 
     print(f"\nComprehensive report saved to: {report_path}")
+"""
 
 
 if __name__ == "__main__":

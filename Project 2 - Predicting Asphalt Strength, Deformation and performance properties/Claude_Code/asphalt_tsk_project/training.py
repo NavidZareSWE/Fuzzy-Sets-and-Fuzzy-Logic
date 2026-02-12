@@ -92,7 +92,7 @@ def tune_tsk_system(
     history = []
 
     for epoch in range(max_epochs):
-        # ── Forward pass ──
+        #  Forward pass
         y_pred = system.predict(X_train)
         error = y_train_col - y_pred
         rmse_val = _rmse(y_train_col, y_pred)
@@ -106,7 +106,7 @@ def tune_tsk_system(
                 print(f"  Converged at epoch {epoch}.")
             break
 
-        # ── Backward pass: gradient w.r.t. antecedent parameters ──
+        #  Backward pass: gradient w.r.t. antecedent parameters
         W = system.get_all_firing_strengths(X_train)        # (N, K)
         W_sum = W.sum(axis=1, keepdims=True)
         W_sum = np.maximum(W_sum, 1e-12)
