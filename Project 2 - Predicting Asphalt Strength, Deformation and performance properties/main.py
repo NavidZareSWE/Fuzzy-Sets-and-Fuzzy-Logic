@@ -17,7 +17,11 @@ import json
 from config import OUTPUT_COLUMNS, RANDOM_SEED, CLUSTER_RADIUS, INPUT_COLUMNS
 from data_loader import load_raw_data, split_data, DataNormaliser
 from training import build_tsk_system, tune_tsk_system
-from evaluation import rmse
+
+
+def rmse(y_true, y_pred):
+    """Root Mean Squared Error."""
+    return float(np.sqrt(np.mean((y_true - y_pred) ** 2)))
 
 
 def main():
@@ -121,14 +125,16 @@ def main():
         ax = axes[idx // 2, idx % 2]
         y_true = predictions[output_name]['test_true']
         y_pred = predictions[output_name]['test_pred']
-        
-        ax.scatter(y_true, y_pred, alpha=0.7, edgecolors='black', linewidth=0.5)
-        
+
+        ax.scatter(y_true, y_pred, alpha=0.7,
+                   edgecolors='black', linewidth=0.5)
+
         # Perfect prediction line
         min_val = min(y_true.min(), y_pred.min())
         max_val = max(y_true.max(), y_pred.max())
-        ax.plot([min_val, max_val], [min_val, max_val], 'r--', label='Perfect Prediction')
-        
+        ax.plot([min_val, max_val], [min_val, max_val],
+                'r--', label='Perfect Prediction')
+
         ax.set_xlabel(f'Actual {output_name} ({units[output_name]})')
         ax.set_ylabel(f'Predicted {output_name} ({units[output_name]})')
         ax.set_title(f'{output_name} - Test Set')
@@ -144,13 +150,15 @@ def main():
         ax = axes[idx // 2, idx % 2]
         y_true = predictions[output_name]['train_true']
         y_pred = predictions[output_name]['train_pred']
-        
-        ax.scatter(y_true, y_pred, alpha=0.7, edgecolors='black', linewidth=0.5)
-        
+
+        ax.scatter(y_true, y_pred, alpha=0.7,
+                   edgecolors='black', linewidth=0.5)
+
         min_val = min(y_true.min(), y_pred.min())
         max_val = max(y_true.max(), y_pred.max())
-        ax.plot([min_val, max_val], [min_val, max_val], 'r--', label='Perfect Prediction')
-        
+        ax.plot([min_val, max_val], [min_val, max_val],
+                'r--', label='Perfect Prediction')
+
         ax.set_xlabel(f'Actual {output_name} ({units[output_name]})')
         ax.set_ylabel(f'Predicted {output_name} ({units[output_name]})')
         ax.set_title(f'{output_name} - Training Set')
@@ -167,7 +175,7 @@ def main():
         y_true = predictions[output_name]['test_true']
         y_pred = predictions[output_name]['test_pred']
         errors = y_pred - y_true
-        
+
         ax.hist(errors, bins=15, edgecolor='black', alpha=0.7)
         ax.axvline(x=0, color='r', linestyle='--', label='Zero Error')
         ax.set_xlabel(f'Prediction Error ({units[output_name]})')
@@ -183,10 +191,10 @@ def main():
     output_name = 'Stability'
     system = systems[output_name]
     n_rules = system.n_rules
-    
+
     fig, axes = plt.subplots(2, 5, figsize=(20, 8))
     x_range = np.linspace(0, 1, 200)
-    
+
     for j, input_name in enumerate(INPUT_COLUMNS):
         ax = axes[j // 5, j % 5]
         for r_idx, rule in enumerate(system.rules):
@@ -194,14 +202,15 @@ def main():
             s = rule.antecedent_sigmas[j]
             mf_values = np.exp(-0.5 * ((x_range - c) / s) ** 2)
             ax.plot(x_range, mf_values, label=f'Rule {r_idx+1}')
-        
+
         ax.set_xlabel(f'{input_name} (normalised)')
         ax.set_ylabel('Membership Degree')
         ax.set_title(f'{input_name}')
         ax.set_ylim([0, 1.05])
         ax.grid(True, alpha=0.3)
-    
-    plt.suptitle(f'Membership Functions for {output_name} System ({n_rules} Rules)', fontsize=14)
+
+    plt.suptitle(
+        f'Membership Functions for {output_name} System ({n_rules} Rules)', fontsize=14)
     plt.tight_layout()
     plt.savefig('output/membership_functions_stability.png', dpi=150)
     plt.close()
@@ -210,13 +219,15 @@ def main():
     fig, ax = plt.subplots(figsize=(10, 6))
     x = np.arange(len(OUTPUT_COLUMNS))
     width = 0.35
-    
+
     train_rmse = [results[name][0] for name in OUTPUT_COLUMNS]
     test_rmse = [results[name][1] for name in OUTPUT_COLUMNS]
-    
-    bars1 = ax.bar(x - width/2, train_rmse, width, label='Train RMSE', color='steelblue')
-    bars2 = ax.bar(x + width/2, test_rmse, width, label='Test RMSE', color='coral')
-    
+
+    bars1 = ax.bar(x - width/2, train_rmse, width,
+                   label='Train RMSE', color='steelblue')
+    bars2 = ax.bar(x + width/2, test_rmse, width,
+                   label='Test RMSE', color='coral')
+
     ax.set_xlabel('Output Variable')
     ax.set_ylabel('RMSE')
     ax.set_title('RMSE Comparison: Training vs Test Data')
@@ -224,7 +235,7 @@ def main():
     ax.set_xticklabels(OUTPUT_COLUMNS)
     ax.legend()
     ax.grid(True, alpha=0.3, axis='y')
-    
+
     # Add value labels on bars
     for bar in bars1:
         height = bar.get_height()
@@ -234,7 +245,7 @@ def main():
         height = bar.get_height()
         ax.annotate(f'{height:.2f}', xy=(bar.get_x() + bar.get_width() / 2, height),
                     xytext=(0, 3), textcoords="offset points", ha='center', fontsize=9)
-    
+
     plt.tight_layout()
     plt.savefig('output/rmse_comparison.png', dpi=150)
     plt.close()
@@ -257,13 +268,17 @@ def main():
     with open("output/rule_summary.txt", "w") as f:
         for output_name, system in systems.items():
             f.write(f"{'='*60}\n")
-            f.write(f"Output: {output_name}  |  Number of rules: {system.n_rules}\n")
+            f.write(
+                f"Output: {output_name}  |  Number of rules: {system.n_rules}\n")
             f.write(f"{'='*60}\n")
             for r_idx, rule in enumerate(system.rules):
                 f.write(f"\nRule {r_idx + 1}:\n")
-                f.write(f"  Antecedent centres: {np.round(rule.antecedent_centres, 5).tolist()}\n")
-                f.write(f"  Antecedent sigmas:  {np.round(rule.antecedent_sigmas, 5).tolist()}\n")
-                f.write(f"  Consequent params:  {np.round(rule.consequent_params, 5).tolist()}\n")
+                f.write(
+                    f"  Antecedent centres: {np.round(rule.antecedent_centres, 5).tolist()}\n")
+                f.write(
+                    f"  Antecedent sigmas:  {np.round(rule.antecedent_sigmas, 5).tolist()}\n")
+                f.write(
+                    f"  Consequent params:  {np.round(rule.consequent_params, 5).tolist()}\n")
             f.write("\n")
 
     # Save dataset statistics

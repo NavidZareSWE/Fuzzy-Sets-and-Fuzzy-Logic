@@ -1,15 +1,14 @@
-"""
-Data loading and preprocessing module.
-"""
-
 import numpy as np
 import pandas as pd
 from sklearn.model_selection import train_test_split
 from sklearn.preprocessing import MinMaxScaler
-
 from config import (
-    DATA_PATH, INPUT_COLUMNS, OUTPUT_COLUMNS, ALL_COLUMNS,
-    TEST_RATIO, RANDOM_SEED,
+    DATA_PATH,
+    INPUT_COLUMNS,
+    OUTPUT_COLUMNS,
+    ALL_COLUMNS,
+    TEST_RATIO,
+    RANDOM_SEED,
 )
 
 

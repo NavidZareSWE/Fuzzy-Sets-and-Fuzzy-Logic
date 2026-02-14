@@ -1,10 +1,8 @@
 import os
 
-# Paths
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 DATA_PATH = os.path.join(BASE_DIR, "Asphalt-Dataset-ToClass.xlsx")
 
-# Data splitting
 TEST_RATIO = 0.20
 RANDOM_SEED = 42
 
@@ -31,10 +29,8 @@ OUTPUT_COLUMNS = [
 
 ALL_COLUMNS = INPUT_COLUMNS + OUTPUT_COLUMNS
 
-# Membership function type
 MF_TYPE = "gaussian"
 
-# TSK model order (1 = linear consequent)
 TSK_ORDER = 1
 
 # Subtractive clustering parameters

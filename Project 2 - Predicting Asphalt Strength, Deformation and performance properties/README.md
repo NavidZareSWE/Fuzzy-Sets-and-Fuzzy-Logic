@@ -52,7 +52,6 @@ This allows interactive prediction by entering 10 input values.
 ├── clustering.py           # Subtractive clustering
 ├── tsk_system.py           # TSK rules and inference engine
 ├── training.py             # Hybrid learning (LSE + gradient descent)
-├── evaluation.py           # RMSE computation
 ├── main.py                 # Training pipeline
 ├── predict.py              # Interactive prediction interface
 ├── data/                   # Dataset (Excel)
