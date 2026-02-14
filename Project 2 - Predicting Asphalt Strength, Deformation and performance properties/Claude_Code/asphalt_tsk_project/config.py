@@ -1,9 +1,3 @@
-"""
-Configuration parameters for the TSK Fuzzy System.
-
-All parameters are centralised here to ensure reproducibility and ease of tuning.
-"""
-
 import os
 
 #

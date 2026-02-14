@@ -9,8 +9,6 @@ This script orchestrates:
     4. Evaluation and reporting of RMSE on train and test sets
     5. Saving results and trained models
 
-Usage:
-    python main.py
 """
 
 import os

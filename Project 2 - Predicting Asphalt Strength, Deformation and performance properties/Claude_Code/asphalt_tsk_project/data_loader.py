@@ -1,10 +1,3 @@
-"""
-Data loading, preprocessing, and train/test splitting utilities.
-
-The Excel file has two header rows (row 0 = group labels, row 1 = column names)
-and one description row (row 2). Actual numeric data begins at row 3.
-"""
-
 import numpy as np
 import pandas as pd
 from sklearn.model_selection import train_test_split

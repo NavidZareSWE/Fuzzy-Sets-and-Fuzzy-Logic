@@ -1,16 +1,3 @@
-"""
-End-user prediction interface.
-
-Loads a trained TSK system from disk and provides a simple command-line
-interface for predicting asphalt properties from input parameters.
-
-Usage:
-    python predict.py
-
-The script prompts the user for the 10 input variables and returns
-predictions for Stability, Flow, ITSM20, and ITSM30.
-"""
-
 import os
 import sys
 import pickle
