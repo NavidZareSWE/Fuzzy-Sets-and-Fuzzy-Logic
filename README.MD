@@ -1,3 +1,6 @@
+
+![Fuzzy sets and Logic](https://res.cloudinary.com/dyjew8iji/image/upload/v1771064627/Fuzzy_sets_and_Logic_aj0dvl.webp)
+
 # Fuzzy-Sets-and-Fuzzy-Logic
 
 A comprehensive repository implementing Fuzzy Logic Systems for time series forecasting and regression problems. This repository contains two major projects demonstrating practical applications of fuzzy set theory in real-world scenarios.
