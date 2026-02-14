@@ -2,44 +2,34 @@
 Subtractive Clustering for automatic rule generation.
 
 This module implements the subtractive clustering algorithm following
-Chiu (1994) as discussed in Mendel (2017, §9.4).  The algorithm operates
-in the normalised joint input–output space and identifies cluster centres
-that later become the antecedent prototypes of TSK rules.
+Chiu (1994) as discussed in Mendel (2017).
 
-Algorithm Summary (Mendel, 2017):
-1.  Each data point is assigned a potential based on its density of
-    surrounding points, using a Gaussian neighbourhood of radius ra.
-2.  The point with the highest potential is selected as the first
-    cluster centre.
-3.  The potential of all remaining points is reduced by the influence
-    of the selected centre (radius rb = squash_factor * ra).
-4.  Steps 2–3 are repeated until the acceptance/rejection criteria
-    are met.
+Algorithm Summary:
+1. Each data point is assigned a potential based on its density of
+   surrounding points, using a Gaussian neighbourhood of radius ra.
+2. The point with the highest potential is selected as the first
+   cluster centre.
+3. The potential of all remaining points is reduced by the influence
+   of the selected centre (radius rb = squash_factor * ra).
+4. Steps 2-3 are repeated until the acceptance/rejection criteria are met.
 """
 
 import numpy as np
 from config import CLUSTER_RADIUS, SQUASH_FACTOR, ACCEPT_RATIO, REJECT_RATIO
 
 
-def subtractive_clustering(
-    data: np.ndarray,
-    ra: float = CLUSTER_RADIUS,
-    squash_factor: float = SQUASH_FACTOR,
-    accept_ratio: float = ACCEPT_RATIO,
-    reject_ratio: float = REJECT_RATIO,
-) -> np.ndarray:
+def subtractive_clustering(data, ra=CLUSTER_RADIUS, squash_factor=SQUASH_FACTOR,
+                           accept_ratio=ACCEPT_RATIO, reject_ratio=REJECT_RATIO):
     """
     Perform subtractive clustering on normalised data.
 
-    Parameters
-    ----------
-    data : (N, D) array — each row is a normalised data vector
-    ra   : neighbourhood radius
-    squash_factor, accept_ratio, reject_ratio : algorithm parameters
+    Parameters:
+        data : (N, D) array - each row is a normalised data vector
+        ra   : neighbourhood radius
+        squash_factor, accept_ratio, reject_ratio : algorithm parameters
 
-    Returns
-    -------
-    centres : (K, D) array — identified cluster centres
+    Returns:
+        centres : (K, D) array - identified cluster centres
     """
     N, D = data.shape
     rb = squash_factor * ra

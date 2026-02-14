@@ -1,20 +1,14 @@
 import os
 
-#
 # Paths
-#
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
-DATA_PATH = os.path.join(BASE_DIR, "data", "Asphalt-Dataset-ToClass.xlsx")
+DATA_PATH = os.path.join(BASE_DIR, "Asphalt-Dataset-ToClass.xlsx")
 
-#
 # Data splitting
-#
 TEST_RATIO = 0.20
 RANDOM_SEED = 42
 
-#
 # Column definitions (matching the Excel layout)
-#
 INPUT_COLUMNS = [
     "Viscosity",       # Pa·s
     "Pb",              # % A.C. by weight
@@ -37,32 +31,19 @@ OUTPUT_COLUMNS = [
 
 ALL_COLUMNS = INPUT_COLUMNS + OUTPUT_COLUMNS
 
-#
-# Fuzzy system parameters
-#
-# Number of fuzzy sets per input variable (used in FCM-based partitioning)
-NUM_CLUSTERS_PER_INPUT = 3   # Low, Medium, High
-
-# Membership function type: 'gaussian'
+# Membership function type
 MF_TYPE = "gaussian"
 
-#
-# TSK model order
-#
-# Order 1 => consequent is a linear function of inputs: y = a0 + a1*x1 + ... + an*xn
+# TSK model order (1 = linear consequent)
 TSK_ORDER = 1
 
-#
-# Rule generation — subtractive clustering
-#
-CLUSTER_RADIUS = 1.2          # ra — neighbourhood radius (normalised space)
+# Subtractive clustering parameters
+CLUSTER_RADIUS = 1.2          # ra - neighbourhood radius (normalised space)
 SQUASH_FACTOR = 1.25          # ratio for rb = squash_factor * ra
 ACCEPT_RATIO = 0.5            # threshold for accepting a cluster centre
 REJECT_RATIO = 0.15           # threshold for rejecting a cluster centre
 
-#
-# Optimisation (LSE + gradient descent hybrid)
-#
+# Optimisation parameters
 LEARNING_RATE = 0.01
 MAX_EPOCHS = 800
-TOLERANCE = 1e-8              # convergence criterion on RMSE change
+TOLERANCE = 1e-8

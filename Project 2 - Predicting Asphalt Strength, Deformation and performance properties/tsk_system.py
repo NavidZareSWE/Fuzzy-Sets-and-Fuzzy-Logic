@@ -1,9 +1,5 @@
 """
-First-order Takagi–Sugeno–Kang (TSK) Fuzzy Inference System.
-
-Theory is drawn from:
-  - Mendel (2017), Chapter 9: "Type-1 TSK Fuzzy Logic Systems"
-  - Klir & Yuan (1995), §12.3: "Fuzzy Systems as Universal Approximators"
+First-order Takagi-Sugeno-Kang (TSK) Fuzzy Inference System.
 
 A first-order TSK rule has the form:
 
@@ -12,9 +8,9 @@ A first-order TSK rule has the form:
 
 The defuzzified output is computed as a weighted average:
 
-    y = Σ_k  w_k * y_k  /  Σ_k  w_k
+    y = Sum_k (w_k * y_k) / Sum_k (w_k)
 
-where w_k = Π_j  mu_{A_jk}(x_j)   (product t-norm, Klir & Yuan §3.3).
+where w_k = Product_j mu_{A_jk}(x_j) (product t-norm).
 """
 
 import numpy as np
@@ -25,32 +21,28 @@ class TSKRule:
     """
     One TSK rule.
 
-    Attributes
-    ----------
-    antecedent_centres : (n_inputs,) — Gaussian MF centres for each input
-    antecedent_sigmas  : (n_inputs,) — Gaussian MF spreads
-    consequent_params  : (n_inputs + 1,) — [p0, p1, ..., pn] for a first-order TSK
+    Attributes:
+        antecedent_centres : (n_inputs,) - Gaussian MF centres for each input
+        antecedent_sigmas  : (n_inputs,) - Gaussian MF spreads
+        consequent_params  : (n_inputs + 1,) - [p0, p1, ..., pn] for first-order TSK
     """
 
-    def __init__(self, centres: np.ndarray, sigmas: np.ndarray, n_inputs: int):
+    def __init__(self, centres, sigmas, n_inputs):
         self.antecedent_centres = centres.copy()
         self.antecedent_sigmas = sigmas.copy()
         # Initialise consequent to small random values
         rng = np.random.default_rng(seed=None)
         self.consequent_params = rng.normal(0, 0.1, size=n_inputs + 1)
 
-    def firing_strength(self, X: np.ndarray) -> np.ndarray:
+    def firing_strength(self, X):
         """
-        Compute the firing strength for every sample in X using the
-        product t-norm (Klir & Yuan, 1995, §3.3).
+        Compute the firing strength for every sample in X using product t-norm.
 
-        Parameters
-        ----------
-        X : (N, n_inputs)
+        Parameters:
+            X : (N, n_inputs)
 
-        Returns
-        -------
-        w : (N,) — firing strengths
+        Returns:
+            w : (N,) - firing strengths
         """
         N = X.shape[0]
         w = np.ones(N)
@@ -60,19 +52,16 @@ class TSKRule:
             w *= mu_j
         return w
 
-    def consequent_output(self, X: np.ndarray) -> np.ndarray:
+    def consequent_output(self, X):
         """
         Evaluate the linear consequent: y_k = p0 + p1*x1 + ... + pn*xn.
 
-        Parameters
-        ----------
-        X : (N, n_inputs)
+        Parameters:
+            X : (N, n_inputs)
 
-        Returns
-        -------
-        y_k : (N,)
+        Returns:
+            y_k : (N,)
         """
-        # Build augmented matrix [1, x1, ..., xn]
         ones = np.ones((X.shape[0], 1))
         X_aug = np.hstack([ones, X])
         return X_aug @ self.consequent_params
@@ -84,26 +73,24 @@ class TSKSystem:
     """
 
     def __init__(self):
-        self.rules: list[TSKRule] = []
+        self.rules = []
 
     @property
-    def n_rules(self) -> int:
+    def n_rules(self):
         return len(self.rules)
 
-    def add_rule(self, rule: TSKRule):
+    def add_rule(self, rule):
         self.rules.append(rule)
 
-    def predict(self, X: np.ndarray) -> np.ndarray:
+    def predict(self, X):
         """
         Perform TSK inference (weighted-average defuzzification).
 
-        Parameters
-        ----------
-        X : (N, n_inputs)
+        Parameters:
+            X : (N, n_inputs)
 
-        Returns
-        -------
-        y : (N,)
+        Returns:
+            y : (N,)
         """
         N = X.shape[0]
         numerator = np.zeros(N)
@@ -118,7 +105,7 @@ class TSKSystem:
         denominator = np.maximum(denominator, 1e-12)
         return numerator / denominator
 
-    def get_all_firing_strengths(self, X: np.ndarray) -> np.ndarray:
+    def get_all_firing_strengths(self, X):
         """Return (N, K) matrix of firing strengths."""
         N = X.shape[0]
         K = self.n_rules
@@ -127,21 +114,14 @@ class TSKSystem:
             W[:, k] = rule.firing_strength(X)
         return W
 
-    def fit_consequents_lse(self, X: np.ndarray, y: np.ndarray):
+    def fit_consequents_lse(self, X, y):
         """
         Estimate consequent parameters by weighted least-squares.
 
-        For each rule k, the normalised firing strength is:
-            w_bar_k = w_k / Σ_j w_j
-
         The output is:
-            y = Σ_k  w_bar_k * (p0k + p1k*x1 + ... + pnk*xn)
-              = Σ_k  w_bar_k * X_aug @ p_k
-
-        This can be written in matrix form  y = A @ P  where
-        A is constructed from the normalised firing strengths and the
-        augmented input matrix.  P is solved via the pseudo-inverse
-        (Mendel, 2017, §9.6).
+            y = Sum_k (w_bar_k * (p0k + p1k*x1 + ... + pnk*xn))
+        
+        This is solved via the pseudo-inverse with ridge regularisation.
         """
         N = X.shape[0]
         n = X.shape[1]
@@ -161,8 +141,6 @@ class TSKSystem:
             A[:, k * (n + 1): (k + 1) * (n + 1)] = W_bar[:, k:k + 1] * X_aug
 
         # Solve via regularised least-squares (ridge regression)
-        # Regularisation prevents overfitting when the number of rules
-        # times (n_inputs+1) approaches or exceeds the sample count.
         lambda_reg = 0.01
         ATA = A.T @ A + lambda_reg * np.eye(A.shape[1])
         ATy = A.T @ y

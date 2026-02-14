@@ -1,47 +1,35 @@
 """
 Training pipeline for the TSK Fuzzy System.
 
-The training procedure follows a two-phase hybrid approach as described
-in Mendel (2017, §9.6–9.7):
+The training procedure follows a two-phase hybrid approach:
 
-Phase 1 — Structure identification:
+Phase 1 - Structure identification:
     Subtractive clustering on the joint (input, output) space determines
     the number of rules and initialises the antecedent MF parameters.
 
-Phase 2 — Parameter optimisation:
+Phase 2 - Parameter optimisation:
     (a) Consequent parameters are estimated via least-squares estimation
         (LSE) with the antecedent parameters fixed.
     (b) Antecedent MF parameters (centres and spreads) are then fine-tuned
         using gradient descent to minimise the mean squared error,
         while consequent parameters are re-estimated by LSE at each epoch.
-
-This hybrid strategy is analogous to the ANFIS learning algorithm
-(Jang, 1993), which Mendel discusses as a canonical example of
-TSK system tuning.
 """
 
 import numpy as np
 from clustering import subtractive_clustering
 from tsk_system import TSKSystem, TSKRule
-from config import (
-    LEARNING_RATE, MAX_EPOCHS, TOLERANCE, CLUSTER_RADIUS,
-)
+from config import LEARNING_RATE, MAX_EPOCHS, TOLERANCE, CLUSTER_RADIUS
 
 
-def _rmse(y_true: np.ndarray, y_pred: np.ndarray) -> float:
+def _rmse(y_true, y_pred):
     return float(np.sqrt(np.mean((y_true - y_pred) ** 2)))
 
 
-def build_tsk_system(
-    X_train: np.ndarray,
-    y_train_col: np.ndarray,
-    ra: float = CLUSTER_RADIUS,
-) -> TSKSystem:
+def build_tsk_system(X_train, y_train_col, ra=CLUSTER_RADIUS):
     """
     Build a TSK system for one output variable.
 
-    Steps
-    -----
+    Steps:
     1. Concatenate normalised inputs and the target output column.
     2. Run subtractive clustering to discover rule prototypes.
     3. Initialise one TSK rule per cluster centre.
@@ -68,21 +56,11 @@ def build_tsk_system(
     return system
 
 
-def tune_tsk_system(
-    system: TSKSystem,
-    X_train: np.ndarray,
-    y_train_col: np.ndarray,
-    lr: float = LEARNING_RATE,
-    max_epochs: int = MAX_EPOCHS,
-    tol: float = TOLERANCE,
-    verbose: bool = False,
-) -> list[float]:
+def tune_tsk_system(system, X_train, y_train_col, lr=LEARNING_RATE,
+                    max_epochs=MAX_EPOCHS, tol=TOLERANCE, verbose=False):
     """
     Fine-tune antecedent parameters via gradient descent and
     re-estimate consequents via LSE at each epoch (hybrid learning).
-
-    The gradient of the MSE with respect to each antecedent centre c_{jk}
-    and spread sigma_{jk} is computed analytically.
 
     Returns a list of RMSE values per epoch for convergence monitoring.
     """
@@ -92,21 +70,16 @@ def tune_tsk_system(
     history = []
 
     for epoch in range(max_epochs):
-        #  Forward pass
+        # Forward pass
         y_pred = system.predict(X_train)
         error = y_train_col - y_pred
         rmse_val = _rmse(y_train_col, y_pred)
         history.append(rmse_val)
 
-        if verbose and (epoch % 50 == 0 or epoch == max_epochs - 1):
-            print(f"  Epoch {epoch:4d}  RMSE = {rmse_val:.6f}")
-
         if epoch > 0 and abs(history[-2] - history[-1]) < tol:
-            if verbose:
-                print(f"  Converged at epoch {epoch}.")
             break
 
-        #  Backward pass: gradient w.r.t. antecedent parameters
+        # Backward pass: gradient w.r.t. antecedent parameters
         W = system.get_all_firing_strengths(X_train)        # (N, K)
         W_sum = W.sum(axis=1, keepdims=True)
         W_sum = np.maximum(W_sum, 1e-12)
@@ -119,27 +92,25 @@ def tune_tsk_system(
 
         for k in range(K):
             rule = system.rules[k]
-            w_k = W[:, k]                                    # (N,)
-            w_bar_k = W_bar[:, k]                            # (N,)
-            y_k = Y_k[:, k]                                  # (N,)
+            w_k = W[:, k]
+            w_bar_k = W_bar[:, k]
+            y_k = Y_k[:, k]
 
-            # dE/d(w_bar_k) = -2/N * error * (y_k - y_pred)
-            # dw_bar_k/dw_k = (W_sum.ravel() - w_k) / (W_sum.ravel() ** 2)
-            dE_dwbar = -error * (y_k - y_pred)               # (N,)
-            dwbar_dw = (W_sum.ravel() - w_k) / (W_sum.ravel() ** 2)  # (N,)
-            dE_dw = dE_dwbar * dwbar_dw                      # (N,)
+            # Gradient calculations
+            dE_dwbar = -error * (y_k - y_pred)
+            dwbar_dw = (W_sum.ravel() - w_k) / (W_sum.ravel() ** 2)
+            dE_dw = dE_dwbar * dwbar_dw
 
             for j in range(n):
                 x_j = X_train[:, j]
                 c_jk = rule.antecedent_centres[j]
-                s_jk = rule.antecedent_sigmas[j]
-                s_jk = max(s_jk, 1e-10)
+                s_jk = max(rule.antecedent_sigmas[j], 1e-10)
 
-                # dw_k/dc_jk = w_k * (x_j - c_jk) / s_jk^2
+                # Gradient for centre
                 dw_dc = w_k * (x_j - c_jk) / (s_jk ** 2)
                 grad_c = np.mean(dE_dw * dw_dc)
 
-                # dw_k/ds_jk = w_k * (x_j - c_jk)^2 / s_jk^3
+                # Gradient for sigma
                 dw_ds = w_k * ((x_j - c_jk) ** 2) / (s_jk ** 3)
                 grad_s = np.mean(dE_dw * dw_ds)
 

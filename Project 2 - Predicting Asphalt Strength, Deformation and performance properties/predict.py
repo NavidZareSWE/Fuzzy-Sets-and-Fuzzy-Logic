@@ -1,3 +1,7 @@
+"""
+Interactive prediction interface for end users.
+"""
+
 import os
 import sys
 import pickle
@@ -6,7 +10,7 @@ import numpy as np
 from config import INPUT_COLUMNS, OUTPUT_COLUMNS
 
 
-def load_model(model_path: str = "output/trained_systems.pkl"):
+def load_model(model_path="output/trained_systems.pkl"):
     if not os.path.exists(model_path):
         print(f"Error: Model file not found at '{model_path}'.")
         print("Please run main.py first to train the system.")
@@ -17,17 +21,15 @@ def load_model(model_path: str = "output/trained_systems.pkl"):
     return bundle["systems"], bundle["normaliser"]
 
 
-def predict_single(systems, normaliser, raw_input: np.ndarray) -> dict:
+def predict_single(systems, normaliser, raw_input):
     """
     Make a prediction for a single input vector.
 
-    Parameters
-    ----------
-    raw_input : (10,) array of raw (un-normalised) input values
+    Parameters:
+        raw_input : (10,) array of raw (un-normalised) input values
 
-    Returns
-    -------
-    predictions : dict mapping output name -> predicted value
+    Returns:
+        predictions : dict mapping output name -> predicted value
     """
     X = raw_input.reshape(1, -1)
     X_norm = normaliser.transform_X(X)
@@ -70,7 +72,7 @@ def interactive_mode():
         raw_input = np.array(values)
         preds = predict_single(systems, normaliser, raw_input)
 
-        print("\n   Predicted Outputs ")
+        print("\n  -- Predicted Outputs --")
         for name, val in preds.items():
             print(f"  {name:>12}: {val:.4f}")
         print()
