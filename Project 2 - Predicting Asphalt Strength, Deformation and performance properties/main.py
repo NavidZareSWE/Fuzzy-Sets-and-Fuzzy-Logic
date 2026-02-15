@@ -77,7 +77,7 @@ def print_results(results, systems):
     print("NUMBER OF RULES PER OUTPUT")
     print("=" * 50)
     for name, system in systems.items():
-        print(f"{name:<12}: {system.n_rules} rules")
+        print(f"{name:<12}: {system.n_rules()} rules")
     print("=" * 50)
 
 

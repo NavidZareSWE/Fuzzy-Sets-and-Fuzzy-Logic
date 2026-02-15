@@ -40,7 +40,7 @@ def tune_tsk_system(system, X_train, y_train_col,
                     tol=TOLERANCE):
 
     n_samples, n_features = X_train.shape
-    n_rules = system.n_rules
+    n_rules = system.n_rules()
     rmse_history = []
 
     for epoch in range(max_epochs):

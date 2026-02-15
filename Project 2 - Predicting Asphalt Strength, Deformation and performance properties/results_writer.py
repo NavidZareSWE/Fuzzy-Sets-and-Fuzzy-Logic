@@ -25,7 +25,7 @@ def save_rule_summary(systems, output_path='output/rule_summary.txt'):
         for output_name, system in systems.items():
             f.write(f"{'='*60}\n")
             f.write(
-                f"Output: {output_name}  |  Number of rules: {system.n_rules}\n")
+                f"Output: {output_name}  |  Number of rules: {system.n_rules()}\n")
             f.write(f"{'='*60}\n")
             for r_idx, rule in enumerate(system.rules):
                 f.write(f"\nRule {r_idx + 1}:\n")
