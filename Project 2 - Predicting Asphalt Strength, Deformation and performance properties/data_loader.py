@@ -15,9 +15,13 @@ from config import (
 def load_raw_data(path=DATA_PATH):
     # print("Resolved DATA_PATH:", path)
     raw = pd.read_excel(path, header=None)
-    # Data rows start at index 3 (0-indexed); first three rows are headers
+    # First three rows are headers
+    #   Selects rows from the fourth row onward,
+    #   resets the index,
+    #   and assigns the modified DataFrame to 'data'.
     data = raw.iloc[3:].reset_index(drop=True)
     data.columns = ALL_COLUMNS
+    # Converts all values in the 'data' DataFrame to numeric, replacing non-numeric entries with NaN to prevent errors in subsequent analyses.
     data = data.apply(pd.to_numeric, errors="coerce")
     data.dropna(inplace=True)
     data.reset_index(drop=True, inplace=True)
@@ -25,11 +29,6 @@ def load_raw_data(path=DATA_PATH):
 
 
 def split_data(df):
-    """
-    Split the dataset into 80% train and 20% test.
-
-    Returns: X_train, X_test, y_train, y_test
-    """
     X = df[INPUT_COLUMNS].values.astype(np.float64)
     Y = df[OUTPUT_COLUMNS].values.astype(np.float64)
 
@@ -40,29 +39,26 @@ def split_data(df):
 
 
 class DataNormaliser:
-    """
-    Min-max normalisation to [0, 1].
-    Fitted on training data only to prevent information leakage.
-    """
+    """Min-max normalisation to [0, 1]."""
 
     def __init__(self):
         self.input_scaler = MinMaxScaler()
         self.output_scalers = {}
 
-    def fit(self, X_train, y_train):
+    def _fit(self, X_train, y_train):
         self.input_scaler.fit(X_train)
         for i, col_name in enumerate(OUTPUT_COLUMNS):
             scaler = MinMaxScaler()
             scaler.fit(y_train[:, i].reshape(-1, 1))
             self.output_scalers[col_name] = scaler
 
-    def transform_X(self, X):
+    def _transform_X(self, X):
         return self.input_scaler.transform(X)
 
-    def inverse_transform_X(self, X_norm):
+    def _inverse_transform_X(self, X_norm):
         return self.input_scaler.inverse_transform(X_norm)
 
-    def transform_y(self, y):
+    def _transform_y(self, y):
         y_norm = np.zeros_like(y)
         for i, col_name in enumerate(OUTPUT_COLUMNS):
             y_norm[:, i] = self.output_scalers[col_name].transform(
@@ -70,7 +66,7 @@ class DataNormaliser:
             ).ravel()
         return y_norm
 
-    def inverse_transform_y(self, y_norm):
+    def _inverse_transform_y(self, y_norm):
         y_orig = np.zeros_like(y_norm)
         for i, col_name in enumerate(OUTPUT_COLUMNS):
             y_orig[:, i] = self.output_scalers[col_name].inverse_transform(

@@ -1,80 +1,143 @@
-"""
-Subtractive Clustering for automatic rule generation.
-
-This module implements the subtractive clustering algorithm following
-Chiu (1994) as discussed in Mendel (2017).
-
-Algorithm Summary:
-1. Each data point is assigned a potential based on its density of
-   surrounding points, using a Gaussian neighbourhood of radius ra.
-2. The point with the highest potential is selected as the first
-   cluster centre.
-3. The potential of all remaining points is reduced by the influence
-   of the selected centre (radius rb = squash_factor * ra).
-4. Steps 2-3 are repeated until the acceptance/rejection criteria are met.
-"""
-
 import numpy as np
 from config import CLUSTER_RADIUS, SQUASH_FACTOR, ACCEPT_RATIO, REJECT_RATIO
 
+# Read More: https://nl.mathworks.com/help/fuzzy/fuzzy-clustering.html#FP2434
 
-def subtractive_clustering(data, ra=CLUSTER_RADIUS, squash_factor=SQUASH_FACTOR,
-                           accept_ratio=ACCEPT_RATIO, reject_ratio=REJECT_RATIO):
-    """
-    Perform subtractive clustering on normalised data.
 
-    Parameters:
-        data : (N, D) array - each row is a normalised data vector
-        ra   : neighbourhood radius
-        squash_factor, accept_ratio, reject_ratio : algorithm parameters
+def subtractive_clustering(input_data, cluster_radius=CLUSTER_RADIUS, squash_factor=SQUASH_FACTOR,
+                           accept_threshold=ACCEPT_RATIO, reject_threshold=REJECT_RATIO):
+    num_samples, num_features = input_data.shape
+    neighbourhood_radius = squash_factor * cluster_radius
+    alpha_coefficient = 4.0 / (cluster_radius ** 2)
+    beta_coefficient = 4.0 / (neighbourhood_radius ** 2)
 
-    Returns:
-        centres : (K, D) array - identified cluster centres
-    """
-    N, D = data.shape
-    rb = squash_factor * ra
-    alpha = 4.0 / (ra ** 2)
-    beta = 4.0 / (rb ** 2)
+    candidates = np.zeros(num_samples)
+    for i in range(num_samples):
+        squared_distances = np.sum((input_data - input_data[i]) ** 2, axis=1)
+        candidates[i] = np.sum(np.exp(-alpha_coefficient * squared_distances))
 
-    # Step 1: compute initial potentials
-    potentials = np.zeros(N)
-    for i in range(N):
-        dists_sq = np.sum((data - data[i]) ** 2, axis=1)
-        potentials[i] = np.sum(np.exp(-alpha * dists_sq))
-
-    centres = []
-    first_potential = potentials.max()
+    cluster_centers = []
+    initial_candidate = candidates.max()
 
     while True:
-        best_idx = np.argmax(potentials)
-        best_potential = potentials[best_idx]
+        #  FIND: Pick point with highest candidate as cluster center candidate
+        #  DECIDE: Should we accept it?
+        #    - Auto-accept if strong enough
+        #    - Auto-reject if too weak (break loop)
+        #    - Use distance+strength rule if in-between
+        best_index = np.argmax(candidates)
+        best_candidate_value = candidates[best_index]
 
-        if len(centres) == 0:
-            # Always accept the first centre
-            centres.append(data[best_idx].copy())
-            first_potential = best_potential
+        if len(cluster_centers) == 0:
+            # Always accept the first center
+            cluster_centers.append(input_data[best_index].copy())
+            initial_candidate = best_candidate_value
         else:
-            ratio = best_potential / first_potential
+            ratio_of_candidates = best_candidate_value / initial_candidate
 
-            if ratio > accept_ratio:
-                centres.append(data[best_idx].copy())
-            elif ratio < reject_ratio:
+            if ratio_of_candidates > accept_threshold:
+                cluster_centers.append(input_data[best_index].copy())
+            elif ratio_of_candidates < reject_threshold:
                 break
             else:
-                # Check shortest distance to existing centres
-                d_min = min(
-                    np.linalg.norm(data[best_idx] - c) for c in centres
+                # Check shortest distance to existing centers
+                # MIDDLE ZONE DECISION: Candidate candidate is neither clearly good nor bad
+
+                # Step 1: Find how far this candidate is from the nearest existing cluster center
+
+                # Step 2: Calculate distance score (0 = right on top, 1 = far away)
+
+                # Step 3: Calculate strength score (0 = weak, 1 = as strong as first cluster)
+
+                # Step 4: Trade-off rule - Accept if sum >= 1.0
+                # - Far away + weak = OK (covers new area)
+                # - Close + strong = OK (justifies being nearby)
+                # - Close + weak = REJECT (redundant and insignificant)
+
+                # If accepted: Add to cluster centers
+                # If rejected: Set its candidate to 0 and look for next best candidate
+                shortest_distance = min(
+                    np.linalg.norm(input_data[best_index] - center) for center in cluster_centers
                 )
-                if (d_min / ra) + (best_potential / first_potential) >= 1.0:
-                    centres.append(data[best_idx].copy())
+                if (shortest_distance / cluster_radius) + (best_candidate_value / initial_candidate) >= 1.0:
+                    cluster_centers.append(input_data[best_index].copy())
                 else:
-                    potentials[best_idx] = 0.0
+                    candidates[best_index] = 0.0
                     continue
 
-        # Reduce potentials around the newly accepted centre
-        new_centre = centres[-1]
-        dists_sq = np.sum((data - new_centre) ** 2, axis=1)
-        potentials -= best_potential * np.exp(-beta * dists_sq)
-        potentials = np.maximum(potentials, 0.0)
+        new_center = cluster_centers[-1]
+        squared_distances = np.sum((input_data - new_center) ** 2, axis=1)
+        candidates -= best_candidate_value * \
+            np.exp(-beta_coefficient * squared_distances)
+        candidates = np.maximum(candidates, 0.0)
 
-    return np.array(centres)
+    return np.array(cluster_centers)
+
+
+"""
+SUBTRACTIVE CLUSTERING ALGORITHM
+
+PURPOSE: Automatically find cluster centers in data without knowing 
+the number of clusters beforehand.
+
+HOW IT WORKS:
+    1. Calculate "candidate" for each point (density measure)
+    2. Repeatedly:
+    - Find point with highest candidate
+    - Decide if it's a good cluster center
+    - If accepted, SUBTRACT candidate from nearby points
+    - Continue until no good candidates remain
+
+WHY "SUBTRACTIVE"? After accepting each center, we reduce (subtract)
+the candidate of surrounding points, forcing the algorithm to search
+in different regions for the next center.
+
+OUTPUT: Array of cluster centers found, in order of strength.
+
+---------------------------------------
+SETUP: Initialize parameters and variables
+---------------------------------------
+- Number of samples and features are determined from input data.
+- Set neighbourhood radius based on squash factor and cluster radius.
+- Calculate alpha and beta coefficients for potential management.
+
+---------------------------------------
+STEP 1: CALCULATE INITIAL CANDIDATES
+---------------------------------------
+For each point, calculate how "dense" its neighborhood is. 
+Dense areas (many nearby points) = HIGH candidate = good cluster center candidates.
+Sparse areas (few nearby points) = LOW candidate = poor candidates. 
+Uses Gaussian kernel: nearby points contribute more to potential than distant ones.
+
+---------------------------------------
+STEP 2: FIND CLUSTER CENTERS (MAIN LOOP)
+---------------------------------------
+Iteratively find cluster centers until no good candidates remain.
+Each iteration:
+1. FIND: Pick point with highest remaining candidate
+2. DECIDE: Accept/reject based on strength and distance from existing centers
+3. SUBTRACT: Reduce candidate around accepted center (the "subtractive" part)
+4. REPEAT: Loop continues until candidates too weak
+
+DECISION LOGIC: Should we accept this candidate as a cluster center?
+THREE CASES:
+1. FIRST CENTER: Always accept (no comparison needed)
+2. STRONG CANDIDATE: Auto-accept if candidate > accept_threshold
+3. WEAK CANDIDATE: Auto-reject if candidate < reject_threshold (STOP)
+4. MIDDLE ZONE: Use distance+strength trade-off rule
+
+---------------------------------------
+STEP 3: SUBTRACT CANDIDATES (Suppression)
+---------------------------------------
+After accepting a cluster center, reduce the candidate of all nearby points.
+WHY? Prevents selecting another center too close to this one.
+Creates "exclusion zone" around accepted centers.
+Forces next iteration to look in different regions.
+How much to subtract: Points CLOSE to center → lose lots of candidate (heavily suppressed),
+Points FAR from center → barely affected, using Gaussian decay with beta_coefficient.
+
+---------------------------------------
+RETURN: Array of discovered cluster centers
+---------------------------------------
+Centers are in order of strength (first = strongest cluster).
+"""

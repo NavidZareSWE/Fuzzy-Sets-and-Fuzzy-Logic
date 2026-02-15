@@ -1,151 +1,97 @@
-"""
-First-order Takagi-Sugeno-Kang (TSK) Fuzzy Inference System.
-
-A first-order TSK rule has the form:
-
-    R_k : IF x1 is A1k AND x2 is A2k AND ... AND xn is Ank
-          THEN y_k = p0k + p1k*x1 + p2k*x2 + ... + pnk*xn
-
-The defuzzified output is computed as a weighted average:
-
-    y = Sum_k (w_k * y_k) / Sum_k (w_k)
-
-where w_k = Product_j mu_{A_jk}(x_j) (product t-norm).
-"""
-
 import numpy as np
 from membership_functions import gaussian_mf
 
 
 class TSKRule:
-    """
-    One TSK rule.
+    def __init__(self, centers, standard_deviations, num_inputs):
+        self.antecedent_centers = centers.copy()
+        self.antecedent_sigmas = standard_deviations.copy()
 
-    Attributes:
-        antecedent_centres : (n_inputs,) - Gaussian MF centres for each input
-        antecedent_sigmas  : (n_inputs,) - Gaussian MF spreads
-        consequent_params  : (n_inputs + 1,) - [p0, p1, ..., pn] for first-order TSK
-    """
-
-    def __init__(self, centres, sigmas, n_inputs):
-        self.antecedent_centres = centres.copy()
-        self.antecedent_sigmas = sigmas.copy()
-        # Initialise consequent to small random values
         rng = np.random.default_rng(seed=None)
-        self.consequent_params = rng.normal(0, 0.1, size=n_inputs + 1)
+        self.consequent_params = rng.normal(
+            0, 0.1, size=num_inputs + 1)
 
-    def firing_strength(self, X):
-        """
-        Compute the firing strength for every sample in X using product t-norm.
+    def firing_level(self, input_data):
+        num_samples = input_data.shape[0]
+        firing_levels = np.ones(num_samples)
+        for feature_idx in range(input_data.shape[1]):
+            membership_value = gaussian_mf(input_data[:, feature_idx],
+                                           self.antecedent_centers[feature_idx],
+                                           self.antecedent_sigmas[feature_idx])
+            firing_levels *= membership_value
+        return firing_levels
 
-        Parameters:
-            X : (N, n_inputs)
-
-        Returns:
-            w : (N,) - firing strengths
-        """
-        N = X.shape[0]
-        w = np.ones(N)
-        for j in range(X.shape[1]):
-            mu_j = gaussian_mf(X[:, j], self.antecedent_centres[j],
-                               self.antecedent_sigmas[j])
-            w *= mu_j
-        return w
-
-    def consequent_output(self, X):
-        """
-        Evaluate the linear consequent: y_k = p0 + p1*x1 + ... + pn*xn.
-
-        Parameters:
-            X : (N, n_inputs)
-
-        Returns:
-            y_k : (N,)
-        """
-        ones = np.ones((X.shape[0], 1))
-        X_aug = np.hstack([ones, X])
-        return X_aug @ self.consequent_params
+    def consequent_output(self, input_data):
+        bias_column = np.ones((input_data.shape[0], 1))
+        augmented_features = np.hstack([bias_column, input_data])
+        return augmented_features @ self.consequent_params
 
 
 class TSKSystem:
-    """
-    Complete first-order TSK fuzzy inference system for a single output.
-    """
-
     def __init__(self):
         self.rules = []
 
-    @property
     def n_rules(self):
         return len(self.rules)
 
     def add_rule(self, rule):
         self.rules.append(rule)
 
-    def predict(self, X):
-        """
-        Perform TSK inference (weighted-average defuzzification).
-
-        Parameters:
-            X : (N, n_inputs)
-
-        Returns:
-            y : (N,)
-        """
-        N = X.shape[0]
-        numerator = np.zeros(N)
-        denominator = np.zeros(N)
+    def predict(self, input_data):
+        num_samples = input_data.shape[0]
+        numerator = np.zeros(num_samples)
+        denominator = np.zeros(num_samples)
 
         for rule in self.rules:
-            w = rule.firing_strength(X)
-            y_k = rule.consequent_output(X)
-            numerator += w * y_k
-            denominator += w
+            firing_levels = rule.firing_level(input_data)
+            rule_output = rule.consequent_output(input_data)
+            numerator += firing_levels * rule_output
+            denominator += firing_levels
 
         denominator = np.maximum(denominator, 1e-12)
         return numerator / denominator
 
-    def get_all_firing_strengths(self, X):
-        """Return (N, K) matrix of firing strengths."""
-        N = X.shape[0]
-        K = self.n_rules
-        W = np.zeros((N, K))
-        for k, rule in enumerate(self.rules):
-            W[:, k] = rule.firing_strength(X)
-        return W
+    def get_all_firing_levels(self, input_data):
+        num_samples = input_data.shape[0]
+        num_rules = self.n_rules()
+        firing_level_matrix = np.zeros((num_samples, num_rules))
+        for rule_idx, rule in enumerate(self.rules):
+            firing_level_matrix[:,
+                                rule_idx] = rule.firing_level(input_data)
+        return firing_level_matrix
 
-    def fit_consequents_lse(self, X, y):
-        """
-        Estimate consequent parameters by weighted least-squares.
+    def fit_consequents_lse(self, input_data, target):
+        num_samples = input_data.shape[0]
+        num_features = input_data.shape[1]
+        num_rules = self.n_rules()
 
-        The output is:
-            y = Sum_k (w_bar_k * (p0k + p1k*x1 + ... + pnk*xn))
-        
-        This is solved via the pseudo-inverse with ridge regularisation.
-        """
-        N = X.shape[0]
-        n = X.shape[1]
-        K = self.n_rules
+        firing_level_matrix = self.get_all_firing_levels(
+            input_data)
+        total_firing_level = firing_level_matrix.sum(
+            axis=1, keepdims=True)
+        total_firing_level = np.maximum(total_firing_level, 1e-12)
+        normalized_firing_levels = firing_level_matrix / total_firing_level
 
-        W = self.get_all_firing_strengths(X)                    # (N, K)
-        W_sum = W.sum(axis=1, keepdims=True)
-        W_sum = np.maximum(W_sum, 1e-12)
-        W_bar = W / W_sum                                       # normalised
+        bias_column = np.ones((num_samples, 1))
+        augmented_features = np.hstack([bias_column, input_data])
 
-        ones = np.ones((N, 1))
-        X_aug = np.hstack([ones, X])                            # (N, n+1)
-
-        # Build the design matrix A of shape (N, K*(n+1))
-        A = np.zeros((N, K * (n + 1)))
-        for k in range(K):
-            A[:, k * (n + 1): (k + 1) * (n + 1)] = W_bar[:, k:k + 1] * X_aug
+        design_matrix = np.zeros((num_samples, num_rules * (num_features + 1)))
+        for rule_idx in range(num_rules):
+            start_col = rule_idx * (num_features + 1)
+            end_col = (rule_idx + 1) * (num_features + 1)
+            design_matrix[:, start_col:end_col] = normalized_firing_levels[:,
+                                                                           rule_idx:rule_idx + 1] * augmented_features
 
         # Solve via regularised least-squares (ridge regression)
-        lambda_reg = 0.01
-        ATA = A.T @ A + lambda_reg * np.eye(A.shape[1])
-        ATy = A.T @ y
-        P = np.linalg.solve(ATA, ATy)
+        regularization_lambda = 0.01
+        gram_matrix = design_matrix.T @ design_matrix + \
+            regularization_lambda * np.eye(design_matrix.shape[1])
+        target_correlation = design_matrix.T @ target
+        all_consequent_params = np.linalg.solve(
+            gram_matrix, target_correlation)
 
         # Distribute the parameters back to rules
-        for k in range(K):
-            self.rules[k].consequent_params = P[k * (n + 1): (k + 1) * (n + 1)]
+        for rule_idx in range(num_rules):
+            start_idx = rule_idx * (num_features + 1)
+            end_idx = (rule_idx + 1) * (num_features + 1)
+            self.rules[rule_idx].consequent_params = all_consequent_params[start_idx:end_idx]

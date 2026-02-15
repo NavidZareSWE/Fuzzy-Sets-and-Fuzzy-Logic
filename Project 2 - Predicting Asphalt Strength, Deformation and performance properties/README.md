@@ -66,7 +66,7 @@ This allows interactive prediction by entering 10 input values.
 
 ### 2. Rule Generation (Subtractive Clustering)
 - Clustering performed on joint input-output space
-- Cluster centres become rule prototypes
+- Cluster centers become rule prototypes
 - Parameters: ra=1.2, squash_factor=1.25, accept_ratio=0.5, reject_ratio=0.15
 
 ### 3. Fuzzy System Structure

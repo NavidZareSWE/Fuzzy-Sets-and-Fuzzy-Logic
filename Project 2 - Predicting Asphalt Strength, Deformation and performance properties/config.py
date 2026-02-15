@@ -36,8 +36,8 @@ TSK_ORDER = 1
 # Subtractive clustering parameters
 CLUSTER_RADIUS = 1.2          # ra - neighbourhood radius (normalised space)
 SQUASH_FACTOR = 1.25          # ratio for rb = squash_factor * ra
-ACCEPT_RATIO = 0.5            # threshold for accepting a cluster centre
-REJECT_RATIO = 0.15           # threshold for rejecting a cluster centre
+ACCEPT_RATIO = 0.5            # threshold for accepting a cluster center
+REJECT_RATIO = 0.15           # threshold for rejecting a cluster center
 
 # Optimisation parameters
 LEARNING_RATE = 0.01
