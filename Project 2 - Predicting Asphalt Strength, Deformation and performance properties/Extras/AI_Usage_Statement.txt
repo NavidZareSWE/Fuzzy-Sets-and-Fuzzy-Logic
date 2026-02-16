@@ -1,0 +1,60 @@
+############## Use of AI Tools – My Philosophy ##############
+
+I use AI tools as productivity and learning aids, not as a replacement for my own thinking or work.
+
+My philosophy is simple:
+
+       If I let AI do everything for me, I become replaceable.
+       If I use AI to remove repetitive or mechanical work, I become more capable.
+
+I never use AI to replace the intellectual core of my work (problem-solving, design decisions, reasoning, or conclusions).
+Instead, I use it the same way a developer uses an IDE, a linter, or autocomplete: to work faster, think more clearly, and focus on what actually matters.
+
+For example:
+
+      - Writing boilerplate is repetitive and does not reflect understanding.
+      - I already know what I want (class structure, methods, logic), so using AI to generate a basic skeleton saves time without removing my responsibility for correctness, design, or understanding.
+      - In writing, I first express my ideas myself, then use AI only to improve clarity, tone, or structure — never to invent content.
+
+This allows me to spend more time:
+
+      - understanding the problem,
+      - validating my approach,
+      - improving quality,
+      - and learning more deeply.
+
+############## Explicit Declaration of AI Use ##############
+
+I used an AI language model for the following purposes:
+
+      1. Understanding the problem
+         To clarify requirements, restate the task, and check my interpretation.
+
+      2. Writing boilerplate code
+         To generate basic class/method skeletons or repetitive structures that I already know how to write.
+
+      3. Naming variables and functions
+         To suggest clearer or more consistent names when readability is important.
+
+      4. Discussing algorithm strategy
+         To reason about possible approaches and validate my design choices.
+
+      5. Writing comments
+         To rephrase my explanations into clearer, well-structured comments.
+
+      6. Writing LaTeX
+         To format equations, sections, and references more efficiently.
+
+      7. Improving academic tone in reports
+         To convert simple wording into formal, professional language (without changing the meaning).
+
+      8. Finding key research terms
+         To generate effective keywords for searching academic papers or documentation (GOOGGLING).
+
+      9. Improving code efficiency (not writing full solutions)
+         To suggest optimizations, edge cases, or performance improvements.
+
+      10. Refactoring & organization suggestions
+          To improve readability, structure, and maintainability of my own code.
+
+All final work, logic, and validation were done by me.
